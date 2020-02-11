@@ -1,43 +1,42 @@
 //! Core Syntax and definitions.
 
-pub mod segment;
-pub mod item;
-
-use self::segment::Segment;
-use self::item::{Item, ItemState};
-use self::item::relation::Relation;
-
-use std::{slice, iter};
+use std::{iter, slice};
 use std::borrow::Cow;
 use std::ops::BitOr;
 use std::rc::Rc;
 
-use ::syntex_syntax::{ptr, ast};
-use ::dot::{Nodes, Edges, Arrow, Style, GraphWalk, Labeller, LabelText, Id};
+use ::dot::{Arrow, Edges, GraphWalk, Id, Labeller, LabelText, Nodes, Style};
 use ::itertools::Itertools;
 
 use ::module::path::ModulePath;
 
+use self::item::{Item, ItemState};
+use self::item::relation::Relation;
+use self::segment::Segment;
+
+pub mod segment;
+pub mod item;
+
 #[derive(Debug, Clone)]
-pub struct ListItem <'a> {
+pub struct ListItem<'a> {
     parse: Item<'a>,
 }
 
-impl <'a> From<Item<'a>> for ListItem <'a> {
-    fn from(parse: Item<'a>) -> ListItem <'a> {
+impl<'a> From<Item<'a>> for ListItem<'a> {
+    fn from(parse: Item<'a>) -> ListItem<'a> {
         ListItem {
-            parse: parse,
+            parse,
         }
     }
 }
 
-impl <'a> From<iter::Peekable<slice::Iter<'a, (ptr::P<ast::Item>, Rc<ModulePath>)>>> for ListItem <'a> {
-    fn from(list: iter::Peekable<slice::Iter<'a, (ptr::P<ast::Item>, Rc<ModulePath>)>>) -> ListItem <'a> {
+impl<'a> From<iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>> for ListItem<'a> {
+    fn from(list: iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>) -> ListItem<'a> {
         ListItem::from(Item::from(list))
     }
 }
 
-impl <'a>Iterator for ListItem<'a> {
+impl<'a> Iterator for ListItem<'a> {
     type Item = ItemState<'a>;
 
     fn next(&mut self) -> Option<ItemState<'a>> {
@@ -88,21 +87,26 @@ impl<'a> GraphWalk<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
     fn nodes(&'a self) -> Nodes<'a, ItemState<'a>> {
         Cow::Owned(self.clone().collect::<Vec<ItemState<'a>>>())
     }
-    
+
     fn edges(&'a self) -> Edges<'a, Segment<'a>> {
         let items = self.clone().collect::<Vec<ItemState<'a>>>();
 
-        Cow::Owned(items.iter()
-                        .map(|item| items.iter()
-                                         .filter(|rhs| item.ne(rhs))
-                                         .filter(|rhs| item.is_relation(rhs))
-                                         .map(|rhs| Segment::from((item.clone(), rhs.clone())))
-                                         .collect::<Vec<Segment<'a>>>())
-                        .collect::<Vec<Vec<Segment<'a>>>>()
-                        .concat()
-                        .into_iter()
-                        .unique()
-                        .collect::<Vec<Segment<'a>>>())
+        let dbg = items.iter().map(|s| format!("{:?}", s)).collect::<Vec<_>>();
+        println!("{:#?}", dbg);
+        
+        let items = items.iter()
+            .map(|item| items.iter()
+                .filter(|rhs| item.ne(rhs))
+                .filter(|rhs| item.is_relation(rhs))
+                .map(|rhs| Segment::from((item.clone(), rhs.clone())))
+                .collect::<Vec<Segment<'a>>>())
+            .collect::<Vec<Vec<Segment<'a>>>>()
+            .concat()
+            .into_iter()
+            .unique()
+            .collect::<Vec<Segment<'a>>>();
+
+        Cow::Owned(items)
     }
 
     fn source(&self, seg: &Segment<'a>) -> ItemState<'a> { seg.left.clone() }

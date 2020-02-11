@@ -36,11 +36,9 @@ unstable      = [] # for building with unstable features on stable Rust
 debug         = [] # for building with debug messages
 travis        = ["lints", "nightly"] # for building with travis-cargo
 
-[dependencies.syntex_syntax]
-version = "0.59"
-
-[dependencies.syntex_errors]
-version = "0.59"
+[dependencies]
+syn = { features = [ "full", "default", "extra-traits", "derive", "parsing", "printing", "clone-impls", "proc-macro" ], version = "1.0.14" }
+quote = "1.0.2"
 
 [dependencies.rustc-serialize]
 version = "0.3"

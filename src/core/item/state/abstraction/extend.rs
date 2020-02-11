@@ -1,64 +1,77 @@
 use std::fmt;
-use std::ops::Deref;
 use std::rc::Rc;
 
-use ::syntex_syntax::print::pprust::ty_to_string;
-use ::syntex_syntax::{symbol, ast};
+use ::dot::escape_html;
+use syn::{FnArg, ItemTrait, PatType, Receiver, ReturnType, Signature, TraitItem, TraitItemMethod, TypeParam, Visibility};
+use syn::export::ToTokens;
 
 use ::module::path::ModulePath;
-
-use ::dot::escape_html;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Trait<'a> {
     pub path: Rc<ModulePath>,
     /// Visibility
-    pub vis: &'a ast::Visibility,
-    pub name: symbol::InternedString,
-    pub params: Vec<symbol::InternedString>,
-    pub items: Vec<(symbol::InternedString, Vec<String>, String)>,
+    pub vis: &'a Visibility,
+    pub name: String,
+    pub params: Vec<String>,
+    pub items: Vec<(String, Vec<String>, String)>,
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::TraitItem>), Rc<ModulePath>)> for Trait<'a> {
-    fn from(((item, ty_params, trait_item), path): ((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::TraitItem>), Rc<ModulePath>)) -> Trait<'a> {
+impl<'a> From<((&'a ItemTrait, &'a Vec<TypeParam>, &'a Vec<TraitItem>), Rc<ModulePath>)> for Trait<'a> {
+    fn from(((item, ty_params, trait_item), path): ((&'a ItemTrait, &'a Vec<TypeParam>, &'a Vec<TraitItem>), Rc<ModulePath>)) -> Trait<'a> {
         Trait {
-            path: path,
+            path,
             vis: &item.vis,
-            name: item.ident.name.as_str(),
+            name: item.ident.to_string(),
             params: ty_params.iter()
-                             .map(|&ast::TyParam {attrs: _, ident: ast::Ident {name, ..}, ..}| name.as_str())
-                             .collect::<Vec<symbol::InternedString>>(),
+                .map(|TypeParam { ident, .. }| ident.to_string())
+                .collect(),
             items: trait_item.iter()
-                             .filter_map(|&ast::TraitItem {id: _, ident: ast::Ident {name, ..}, attrs: _, ref node, ..}|
-                                   if let &ast::TraitItemKind::Method(ast::MethodSig { unsafety: _, constness: _, abi: _, ref decl, ..}, _) = node {
-                                       if let &ast::FnDecl {ref inputs, output: ast::FunctionRetTy::Ty(ref ty), ..} = decl.deref() {
-                                           Some((name.as_str(), inputs.iter().map(|input| ty_to_string(&input.ty)).collect::<Vec<String>>(), ty_to_string(&ty)))
-                                       } else {
-                                           None
-                                       }
-                                   } else {
-                                       None
-                                   }
-                             )
-                            .collect::<Vec<(symbol::InternedString, Vec<String>, String)>>()
+                .filter_map(|item: &TraitItem|
+                    if let TraitItem::Method(TraitItemMethod { sig: Signature { ident, inputs, output: ReturnType::Type(_, output), .. }, .. }) = item {
+                        Some((ident.to_string(), inputs.iter().filter_map(|input| {
+                            dbg!(input);
+                            match input {
+                                FnArg::Typed(PatType { ty, .. }) => {
+                                    Some(ty.to_token_stream().to_string())
+                                }
+                                FnArg::Receiver(Receiver { reference, mutability, .. }) => { // FIXME
+                                    let (r1, r2) = match reference {
+                                        Some((and, lifetime)) => (Some(and.to_token_stream().to_string()), Some(lifetime.to_token_stream().to_string())),
+                                        None => (None, None)
+                                    };
+                                    let mutability = Some(mutability.to_token_stream().to_string());
+                                    let s = Some(" Self".into());
+                                    Some([r1, r2, mutability, s].into_iter().flatten().map(ToString::to_string).collect())
+                                }
+                                _ => {
+                                    None
+                                }
+                            }
+                        }).collect(), output.to_token_stream().to_string()))
+                    } else {
+                        None
+                    }
+                )
+                .collect::<Vec<(String, Vec<String>, String)>>(),
         }
     }
 }
 
-impl <'a>fmt::Display for Trait<'a> {
+impl<'a> fmt::Display for Trait<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "&lt;&lt;&lt;Trait&gt;&gt;&gt;\n{name}|{items}",
-           name = self.name,
-           items = escape_html(self.items.iter()
-                                   .map(|&(ref name, ref ty, ref ret): &(symbol::InternedString, Vec<String>, String)|
-                                        format!("{name}({ty}) -> {ret}",
-                                            name = name,
-                                            ty = ty.join(", "),
-                                            ret = ret
-                                        ))
-                                   .collect::<Vec<String>>()
-                                   .join("\n")
-                                   .as_str())
+               name = self.name,
+               items = escape_html(self.items.iter()
+                   .map(|&(ref name, ref ty, ref ret): &(String, Vec<String>, String)|
+                       format!("{name}({ty}) -> {ret}",
+                               name = name,
+                               ty = ty.join(", "),
+                               ret = ret
+                       ))
+                   .collect::<Vec<String>>()
+                   .join("\n")
+                   .as_str())
         )
     }
 }

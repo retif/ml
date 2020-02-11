@@ -1,68 +1,65 @@
 use std::fmt;
 use std::rc::Rc;
 
-use ::syntex_syntax::print::pprust::ty_to_string;
-use ::syntex_syntax::{codemap, symbol, ast};
+use ::dot::escape_html;
+use syn::{Field, TypeParam, Variant};
+use syn::export::ToTokens;
 
 use ::module::path::ModulePath;
 
-use ::dot::escape_html;
-
 /// The structure `Enum` is a enumerate abstract element.
-
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Enum<'a> {
     pub path: Rc<ModulePath>,
     /// Visibility
-    pub vis: &'a ast::Visibility,
-    pub name: symbol::InternedString,
-    pub params: Vec<symbol::InternedString>,
-    pub variants: Vec<(symbol::InternedString, Vec<String>)>,
+    pub vis: &'a syn::Visibility,
+    pub name: String,
+    pub params: Vec<String>,
+    pub variants: Vec<(String, Vec<String>)>,
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)> for Enum<'a> {
-    fn from(((item, ty_params, variants), path): ((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)) -> Enum<'a> {
+impl<'a> From<((&'a syn::ItemEnum, &'a Vec<TypeParam>, &'a Vec<Variant>), Rc<ModulePath>)> for Enum<'a> {
+    fn from(((item, ty_params, variants), path): ((&'a syn::ItemEnum, &'a Vec<TypeParam>, &'a Vec<Variant>), Rc<ModulePath>)) -> Enum<'a> {
         Enum {
-            path: path,
+            path,
             vis: &item.vis,
-            name: item.ident.name.as_str(),
+            name: item.ident.to_string(),
             params: ty_params.iter()
-                             .map(|&ast::TyParam {attrs: _, ident: ast::Ident {name, ..}, ..}| name.as_str())
-                             .collect::<Vec<symbol::InternedString>>(),
+                .map(|param| param.ident.to_string())
+                .collect(),
             variants: variants.iter()
-                              .map(|&codemap::Spanned {node: ast::Variant_ {name: ast::Ident {name, ..}, attrs: _, ref data, ..}, ..}| {
-                                   if let &ast::VariantData::Tuple(ref struct_field, _) = data {
-                                       (name.as_str(),
-                                        struct_field.iter()
-                                                    .filter_map(|&ast::StructField { span: _, ident: _, vis: _, id: _, ref ty, .. }| Some(ty_to_string(&ty)))
-                                                    .collect::<Vec<String>>())
-                                   } else {
-                                       (name.as_str(), Vec::new())
-                                   }
-                              })
-                              .collect::<Vec<(symbol::InternedString, Vec<String>)>>(),
+                .map(|Variant { ident, fields, .. }|
+                    (ident.to_string(), if fields.is_empty() {
+                        vec![]
+                    } else {
+                        fields.iter()
+                            .map(|Field { ty, .. }|
+                                ty.to_token_stream().to_string()
+                            ).collect()
+                    }))
+                .collect(),
         }
     }
 }
 
-impl <'a>fmt::Display for Enum<'a> {
+impl<'a> fmt::Display for Enum<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.variants.is_empty() {
             write!(f, "&lt;&lt;&lt;Enumeration&gt;&gt;&gt;\n{name}", name = self.name)
         } else {
             write!(f, "&lt;&lt;&lt;Enumeration&gt;&gt;&gt;\n{name}|{variants}",
-                name = self.name,
-                variants = escape_html(self.variants.iter()
-                                           .map(|&(ref name, ref struct_field): &(symbol::InternedString, Vec<String>)|
-                                                if struct_field.is_empty() {
-                                                    format!("{}", name)
-                                                } else {
-                                                    format!("{}({})", name, struct_field.join(", "))
-                                                }
-                                           )
-                                           .collect::<Vec<String>>()
-                                           .join("\n")
-                                           .as_str()),
+                   name = self.name,
+                   variants = escape_html(self.variants.iter()
+                       .map(|&(ref name, ref struct_field): &(String, Vec<String>)|
+                           if struct_field.is_empty() {
+                               format!("{}", name)
+                           } else {
+                               format!("{}({})", name, struct_field.join(", "))
+                           }
+                       )
+                       .collect::<Vec<String>>()
+                       .join("\n")
+                       .as_str()),
             )
         }
     }

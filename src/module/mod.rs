@@ -3,20 +3,20 @@ use std::path::PathBuf;
 use std::ffi::OsString;
 use std::vec;
 
-use syntex_syntax::{ast, ptr};
-
+extern crate syn;
 pub mod path;
 
 use self::path::ModulePath;
+use syn::Item;
 
 #[derive(Default, Debug, Clone)]
 pub struct Module {
-    pub list: Vec<ptr::P<ast::Item>>,
+    pub list: Vec<Item>,
     pub path: ModulePath,
 }
 
-impl From<(Vec<ptr::P<ast::Item>>, PathBuf)> for Module {
-    fn from((list, mut path): (Vec<ptr::P<ast::Item>>, PathBuf)) -> Module {
+impl From<(Vec<Item>, PathBuf)> for Module {
+    fn from((list, mut path): (Vec<Item>, PathBuf)) -> Module {
         path.set_extension("");
         Module {
             list: list,
@@ -31,14 +31,14 @@ impl From<(Vec<ptr::P<ast::Item>>, PathBuf)> for Module {
 }
 
 impl IntoIterator for Module {
-    type Item = (ptr::P<ast::Item>, Rc<ModulePath>);
-    type IntoIter = vec::IntoIter<(ptr::P<ast::Item>, Rc<ModulePath>)>;
+    type Item = (Item, Rc<ModulePath>);
+    type IntoIter = vec::IntoIter<(Item, Rc<ModulePath>)>;
 
     fn into_iter(self) -> Self::IntoIter {
         let ref rc: Rc<ModulePath> = Rc::new(self.path);
         self.list.into_iter()
                  .map(|item| (item, Rc::clone(rc)))
-                 .collect::<Vec<(ptr::P<ast::Item>, Rc<ModulePath>)>>()
+                 .collect::<Vec<(Item, Rc<ModulePath>)>>()
                  .into_iter()
     }
 }

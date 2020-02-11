@@ -14,8 +14,8 @@ pub struct Segment<'a> {
 impl <'a> From<(ItemState<'a>, ItemState<'a>)> for Segment <'a> {
     fn from((left, right): (ItemState<'a>, ItemState<'a>)) -> Segment<'a> {
         Segment {
-            left: left,
-            right: right,
+            left,
+            right,
         }
     }
 }

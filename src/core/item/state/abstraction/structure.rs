@@ -1,56 +1,58 @@
 use std::fmt;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
-use ::syntex_syntax::print::pprust::ty_to_string;
-use ::syntex_syntax::{symbol, ast};
+use ::dot::escape_html;
+use syn::{Field, ItemStruct, Visibility};
+use syn::export::ToTokens;
 
 use ::module::path::ModulePath;
 
-use ::dot::escape_html;
-
 /// The structure `Struct` is a structure abstract element.
-
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Struct<'a> {
     pub path: Rc<ModulePath>,
     /// Visibility
-    pub vis: &'a ast::Visibility,
-    pub name: symbol::InternedString,
-    pub fields: Vec<(&'a ast::Visibility, symbol::InternedString, String)>,
+    pub vis: &'a Visibility,
+    pub name: String,
+    pub fields: Vec<(&'a Visibility, String, String)>,
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::StructField>), Rc<ModulePath>)> for Struct<'a> {
-    fn from(((item, struct_field), path): ((&'a ast::Item, &'a Vec<ast::StructField>), Rc<ModulePath>)) -> Struct<'a> {
+impl<'a> From<((&'a ItemStruct, &'a Vec<Field>), Rc<ModulePath>)> for Struct<'a> {
+    fn from(((item, struct_field), path): ((&'a ItemStruct, &'a Vec<Field>), Rc<ModulePath>)) -> Struct<'a> {
         Struct {
-            path: path,
+            path,
             vis: &item.vis,
-            name: item.ident.name.as_str(),
+            name: item.ident.to_string(),
             fields: struct_field.iter()
-                                .filter_map(|&ast::StructField { span: _, ident, ref vis, id: _, ref ty, .. }|
-                                           ident.and_then(|ast::Ident {name, ..}| Some((vis, name.as_str(), ty_to_string(&ty)))))
-                                .collect::<Vec<(&ast::Visibility, symbol::InternedString, String)>>()
+                .enumerate()
+                .map(|(index, Field { vis, ident, ty, .. })| {
+                    let ident = if let Some(ident) = ident { ident.to_string() } else { index.to_string() };
+                    (vis, ident, ty.to_token_stream().to_string())
+                })
+                .collect(),
         }
     }
 }
 
-impl <'a>fmt::Display for Struct<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<'a> fmt::Display for Struct<'a> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.fields.is_empty() {
             write!(f, "&lt;&lt;&lt;Structure&gt;&gt;&gt;\n{name}", name = self.name)
         } else {
             write!(f, "&lt;&lt;&lt;Structure&gt;&gt;&gt;\n{name}|{fields}",
-                name = self.name,
-                fields = escape_html(self.fields.iter()
-                                                .map(|&(ref vis, ref name, ref ty): &(&ast::Visibility, symbol::InternedString, String)|
-                                                    if ast::Visibility::Public.eq(vis) {
-                                                        format!("+ {name}: {ty}", name = name, ty = ty)
-                                                    } else {
-                                                        format!("- {name}: {ty}", name = name, ty = ty)
-                                                    }
-                                                )
-                                                .collect::<Vec<String>>()
-                                                .join("\n")
-                                                .as_str()),
+                   name = self.name,
+                   fields = escape_html(self.fields.iter()
+                       .map(|&(ref vis, ref name, ref ty): &(&Visibility, String, String)|
+                           if let Visibility::Public(_) = vis {
+                               format!("+ {name}: {ty}", name = name, ty = ty)
+                           } else {
+                               format!("- {name}: {ty}", name = name, ty = ty)
+                           }
+                       )
+                       .collect::<Vec<String>>()
+                       .join("\n")
+                       .as_str()),
             )
         }
     }
