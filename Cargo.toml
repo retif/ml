@@ -17,11 +17,6 @@ categories = ["visualization"]
 travis-ci = { repository = "adjivas/ml", branch = "master" }
 appveyor = { repository = "adjivas/ml", branch = "master", service = "github" }
 
-[[bin]]
-name = "ml"
-doc  = false
-test = false
-
 [lib]
 test = false
 doctest = true
