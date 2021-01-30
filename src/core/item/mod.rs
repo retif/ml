@@ -32,16 +32,15 @@ impl<'a> Iterator for Item<'a> {
     /// The method `next` will returns the first abstract elements defined like a structure,
     /// enumeration or trait.
     fn next(&mut self) -> Option<ItemState<'a>> {
-        self.it.next().and_then(|item| {
+        self.it.next().map(|item| {
             let mut list: Vec<&'a (syn::Item, Rc<ModulePath>)> = vec!(item);
 
-            list.extend(self.it.peeking_take_while(|(item, _)|
-                if let syn::Item::Impl(_) = item {
-                    true
-                } else {
-                    false
-                }));
-            Some(ItemState::from(list))
+            list.extend(self.it
+                .peeking_take_while(|(item, _)|
+                    matches!(item, syn::Item::Impl(_))
+                )
+            );
+            ItemState::from(list)
         })
     }
 }

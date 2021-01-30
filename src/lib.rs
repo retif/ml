@@ -45,9 +45,9 @@ pub mod module;
 pub mod core;
 
 /// The default name of *graph/dot* file.
-pub const DEFAULT_NAME_DOT: &'static str = "ml.dot";
+pub const DEFAULT_NAME_DOT: &str = "ml.dot";
 /// The default name of *image/svg* file.
-pub const DEFAULT_NAME_PNG: &'static str = "ml.svg";
+pub const DEFAULT_NAME_PNG: &str = "ml.svg";
 
 #[derive(Debug)]
 pub enum Error {
@@ -93,15 +93,15 @@ fn file2crate<P: AsRef<Path>>(path: P) -> Result<syn::File, Error> {
 }
 
 /// The function `items2chars` returns a graph formated for *Graphiz/Dot*.
-fn items2chars<'a>(modules: Vec<Module>) -> Result<Vec<u8>, Error> {
+fn items2chars(modules: Vec<Module>) -> Result<Vec<u8>, Error> {
     let mut f: Vec<u8> = Vec::new();
     let iter: Vec<(syn::Item, Rc<ModulePath>)> =
         modules.into_iter()
             .flat_map(|s: Module| s.into_iter())
             .collect::<Vec<(syn::Item, Rc<ModulePath>)>>();
-    let iter: ListItem = ListItem::from(iter.as_slice().into_iter().peekable());
+    let iter: ListItem = ListItem::from(iter.iter().peekable());
 
-    dot::render(&iter, &mut f).and_then(|()| Ok(f)).map_err(Into::into)
+    dot::render(&iter, &mut f).map(|()| f).map_err(Into::into)
 }
 
 /// The function `rs2dot` returns graphed file module.
@@ -114,8 +114,8 @@ fn items2chars<'a>(modules: Vec<Module>) -> Result<Vec<u8>, Error> {
 ///     let _ = mml::rs2dot("src/lib.rs");
 /// }
 /// ```
-pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Error> {
-    file2crate(path.as_ref()).and_then(|parse: syn::File| items2chars(vec![Module::from((parse.items, path.as_ref().to_path_buf()))]).into())
+pub fn rs2dot<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Error> {
+    file2crate(path.as_ref()).and_then(|parse: syn::File| items2chars(vec![Module::from((parse.items, path.as_ref().to_path_buf()))]))
 }
 
 /// The function `src2dot` returns graphed repository of modules.
@@ -128,7 +128,7 @@ pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Error> {
 ///     let _ = mml::src2dot("src");
 /// }
 /// ```
-pub fn src2dot<'a, P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Error> {
+pub fn src2dot<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Error> {
     items2chars(WalkDir::new(path).into_iter()
         .filter_map(|entry: Result<walkdir::DirEntry, _>| entry.ok())
         .filter(|entry| entry.file_type().is_file())
@@ -136,7 +136,7 @@ pub fn src2dot<'a, P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Error> {
             let path: &Path = entry.path();
 
             if path.extension().eq(&Some(OsStr::new("rs"))) {
-                file2crate(path).ok().and_then(|file| Some(Module::from((file.items, path.to_path_buf()))))
+                file2crate(path).ok().map(|file| Module::from((file.items, path.to_path_buf())))
             } else {
                 None
             }
@@ -149,12 +149,12 @@ pub fn content2svg(buf: Vec<u8>) -> Result<Vec<u8>, Error> {
         Command::new("dot").arg("-Tsvg")
                            .stdin(Stdio::piped()).stdout(Stdio::piped())
                            .spawn()
-                           .and_then(|child| {
+                           .map(|child| {
                                 let mut ret = vec![];
 
             child.stdin.unwrap().write_all(buf.as_slice()).unwrap();
             child.stdout.unwrap().read_to_end(&mut ret).unwrap();
-            Ok(ret)
+            ret
         }).map_err(Into::into)
 }
 

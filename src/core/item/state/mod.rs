@@ -17,9 +17,9 @@ pub mod implem;
 pub mod method;
 
 #[cfg(not(feature = "fn-emilgardis"))]
-const DEFAULT_FUNC: &'static str = " ";
+const DEFAULT_FUNC: &str = " ";
 #[cfg(feature = "fn-emilgardis")]
-const DEFAULT_FUNC: &'static str = " fn ";
+const DEFAULT_FUNC: &str = " fn ";
 
 /// The structure `ItemState` describes an abstract element with a collections of methodes
 /// and implementations.
@@ -145,10 +145,10 @@ impl<'a> From<(Abstract<'a>, Vec<&'a (Item, Rc<ModulePath>)>)> for ItemState<'a>
 
 impl<'a> From<Vec<&'a (Item, Rc<ModulePath>)>> for ItemState<'a> {
     fn from(state: Vec<&'a (Item, Rc<ModulePath>)>) -> ItemState<'a> {
-        state.split_first().and_then(|(&&(ref item, ref path), properties): (&&'a (Item, Rc<ModulePath>), &[&'a (Item, Rc<ModulePath>)])| {
-            match &item {
+        state.split_first().and_then(|((item, path), properties)| {
+            match item {
                 // Trait.
-                &Item::Trait(item) => {
+                Item::Trait(item) => {
                     let ItemTrait { generics, items, .. } = item;
                     let ty_params = Box::leak(Box::new(generics.type_params().cloned().collect())); // FIXME
                     let kind: (_, &'a Vec<TypeParam>, &'a Vec<TraitItem>) = (item, ty_params, items);
@@ -156,14 +156,14 @@ impl<'a> From<Vec<&'a (Item, Rc<ModulePath>)>> for ItemState<'a> {
                     Some(ItemState::from(kind))
                 }
                 // Structure with variables.
-                &Item::Struct(item) => {
+                Item::Struct(item) => {
                     let fields = Box::leak(Box::new(item.fields.iter().cloned().collect())); // FIXME
                     let kind: (_, &Vec<Field>) = (item, fields);
                     let kind = (Abstract::Struct((kind, Rc::clone(path)).into()), properties.to_vec());
                     Some(ItemState::from(kind))
                 }
                 // Enumeration with variables.
-                &Item::Enum(item) => {
+                Item::Enum(item) => {
                     let ItemEnum { generics, variants, .. } = item;
                     let ty_params = Box::leak(Box::new(generics.type_params().cloned().collect())); // FIXME
                     let variants = Box::leak(Box::new(variants.iter().cloned().collect())); // FIXME
