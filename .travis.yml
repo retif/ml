@@ -5,7 +5,7 @@ rust:
   - beta
   - nightly
 os:
-  - osx
+  # - osx
   - linux
 addons:
   apt:
