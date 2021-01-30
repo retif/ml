@@ -3,8 +3,8 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 use ::dot::escape_html;
+use quote::ToTokens;
 use syn::{Field, ItemStruct, Visibility};
-use quote::{ToTokens, TokenStreamExt};
 
 use ::module::path::ModulePath;
 

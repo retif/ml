@@ -14,7 +14,7 @@ struct A<T> where T: Debug {
 impl<T> A<T> where T: Debug {
     fn a(a: T) -> Self {
         A {
-            a: a,
+            a,
         }
     }
 }
@@ -29,7 +29,7 @@ trait B<T>: Debug where T: Debug {
     fn a(&self) -> Option<T>;
 }
 
-impl<T> B<T> {
+impl<T> dyn B<T> {
     fn a(&self) -> Option<T> {
         None
     }

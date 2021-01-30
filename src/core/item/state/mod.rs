@@ -127,10 +127,14 @@ impl<'a> From<(Abstract<'a>, Vec<&'a (Item, Rc<ModulePath>)>)> for ItemState<'a>
             node,
             method: properties.iter()
                 .filter_map(|&&(ref item, ref path): &&'a (Item, Rc<ModulePath>)|
-                    if let Item::Impl(ItemImpl { trait_: None, items, .. }) = item {
-                        Some(Method::from((items, Rc::clone(path))))
-                    } else {
-                        None
+                    match item {
+                        Item::Impl(ItemImpl { trait_, items, .. })
+                        if trait_.is_none() => {
+                            Some(Method::from((items, Rc::clone(path))))
+                        }
+                        _ => {
+                            None
+                        }
                     }
                 )
                 .collect(),
@@ -151,7 +155,7 @@ impl<'a> From<Vec<&'a (Item, Rc<ModulePath>)>> for ItemState<'a> {
     fn from(state: Vec<&'a (Item, Rc<ModulePath>)>) -> ItemState<'a> {
         state.split_first().and_then(|(&&(ref item, ref path), properties): (&&'a (Item, Rc<ModulePath>), &[&'a (Item, Rc<ModulePath>)])| {
             match &item {
-                /// Trait.
+                // Trait.
                 &Item::Trait(item) => {
                     let ItemTrait { generics, items, .. } = item;
                     let ty_params = Box::leak(Box::new(generics.type_params().cloned().collect())); // FIXME
@@ -159,14 +163,14 @@ impl<'a> From<Vec<&'a (Item, Rc<ModulePath>)>> for ItemState<'a> {
                     let kind: (Abstract, Vec<&'a (Item, Rc<ModulePath>)>) = (Abstract::Trait((kind, Rc::clone(path)).into()), properties.to_vec());
                     Some(ItemState::from(kind))
                 }
-                /// Structure with variables.
+                // Structure with variables.
                 &Item::Struct(item) => {
                     let fields = Box::leak(Box::new(item.fields.iter().cloned().collect())); // FIXME
                     let kind: (_, &Vec<Field>) = (item, fields);
                     let kind = (Abstract::Struct((kind, Rc::clone(path)).into()), properties.to_vec());
                     Some(ItemState::from(kind))
                 }
-                /// Enumeration with variables.
+                // Enumeration with variables.
                 &Item::Enum(item) => {
                     let ItemEnum { generics, variants, .. } = item;
                     let ty_params = Box::leak(Box::new(generics.type_params().cloned().collect())); // FIXME

@@ -2,7 +2,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use ::dot::escape_html;
-use quote::{TokenStreamExt, ToTokens};
+use quote::ToTokens;
 use syn::{
     FnArg,
     ImplItem,
@@ -59,8 +59,8 @@ impl<'a> Method<'a> {
 impl<'a> From<(Vec<(&'a Visibility, String, &'a Punctuated<FnArg, Comma>, Option<&'a Box<Type>>)>, Rc<ModulePath>)> for Method<'a> {
     fn from((func, path): (Vec<(&'a Visibility, String, &'a Punctuated<FnArg, Comma>, Option<&'a Box<Type>>)>, Rc<ModulePath>)) -> Method<'a> {
         Method {
-            func: func,
-            path: path,
+            func,
+            path,
         }
     }
 }

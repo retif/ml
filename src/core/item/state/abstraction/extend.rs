@@ -2,7 +2,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use ::dot::escape_html;
-use quote::{TokenStreamExt, ToTokens};
+use quote::ToTokens;
 use syn::{FnArg, ItemTrait, PatType, Receiver, ReturnType, Signature, TraitItem, TraitItemMethod, TypeParam, Visibility};
 
 use ::module::path::ModulePath;
@@ -42,10 +42,7 @@ impl<'a> From<((&'a ItemTrait, &'a Vec<TypeParam>, &'a Vec<TraitItem>), Rc<Modul
                                     };
                                     let mutability = Some(mutability.to_token_stream().to_string());
                                     let s = Some(" Self".into());
-                                    Some([r1, r2, mutability, s].into_iter().flatten().map(ToString::to_string).collect())
-                                }
-                                _ => {
-                                    None
+                                    Some([r1, r2, mutability, s].iter().flatten().map(ToString::to_string).collect())
                                 }
                             }
                         }).collect(), output.to_token_stream().to_string()))

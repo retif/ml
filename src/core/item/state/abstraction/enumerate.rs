@@ -2,7 +2,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use ::dot::escape_html;
-use quote::{TokenStreamExt, ToTokens};
+use quote::ToTokens;
 use syn::{Field, TypeParam, Variant};
 
 use ::module::path::ModulePath;

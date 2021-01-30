@@ -19,7 +19,7 @@ impl From<(Vec<Item>, PathBuf)> for Module {
     fn from((list, mut path): (Vec<Item>, PathBuf)) -> Module {
         path.set_extension("");
         Module {
-            list: list,
+            list,
             path: ModulePath {
                 path: path.components()
                           .skip(1)
