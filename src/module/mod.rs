@@ -1,6 +1,6 @@
-use std::rc::Rc;
-use std::path::PathBuf;
 use std::ffi::OsString;
+use std::path::PathBuf;
+use std::rc::Rc;
 use std::vec;
 
 extern crate syn;
@@ -21,10 +21,11 @@ impl From<(Vec<Item>, PathBuf)> for Module {
         Module {
             list,
             path: ModulePath {
-                path: path.components()
-                          .skip(1)
-                          .map(|comp| comp.as_os_str().to_os_string())
-                          .collect::<Vec<OsString>>(),
+                path: path
+                    .components()
+                    .skip(1)
+                    .map(|comp| comp.as_os_str().to_os_string())
+                    .collect::<Vec<OsString>>(),
             },
         }
     }
@@ -36,9 +37,10 @@ impl IntoIterator for Module {
 
     fn into_iter(self) -> Self::IntoIter {
         let rc = &Rc::new(self.path);
-        self.list.into_iter()
-                 .map(|item| (item, Rc::clone(rc)))
-                 .collect::<Vec<(Item, Rc<ModulePath>)>>()
-                 .into_iter()
+        self.list
+            .into_iter()
+            .map(|item| (item, Rc::clone(rc)))
+            .collect::<Vec<(Item, Rc<ModulePath>)>>()
+            .into_iter()
     }
 }

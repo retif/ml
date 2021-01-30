@@ -1,5 +1,5 @@
-use std::ops::{BitOr, BitAnd};
 use std::hash::{Hash, Hasher};
+use std::ops::{BitAnd, BitOr};
 
 use super::ItemState;
 
@@ -11,25 +11,21 @@ pub struct Segment<'a> {
     pub right: ItemState<'a>,
 }
 
-impl <'a> From<(ItemState<'a>, ItemState<'a>)> for Segment <'a> {
+impl<'a> From<(ItemState<'a>, ItemState<'a>)> for Segment<'a> {
     fn from((left, right): (ItemState<'a>, ItemState<'a>)) -> Segment<'a> {
-        Segment {
-            left,
-            right,
-        }
+        Segment { left, right }
     }
 }
 
-impl <'a> Hash for Segment <'a> {
-    fn hash<H: Hasher>(&self, _: &mut H) {
-    }
+impl<'a> Hash for Segment<'a> {
+    fn hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl <'a> PartialEq for Segment <'a> {
+impl<'a> PartialEq for Segment<'a> {
     fn eq(&self, rhs: &Segment) -> bool {
-        self.left.eq(&rhs.left)
-                 .bitand(self.right.eq(&rhs.right))
-                                   .bitor(self.left.eq(&rhs.right)
-                                                   .bitand(self.right.eq(&rhs.left)))
+        self.left
+            .eq(&rhs.left)
+            .bitand(self.right.eq(&rhs.right))
+            .bitor(self.left.eq(&rhs.right).bitand(self.right.eq(&rhs.left)))
     }
 }

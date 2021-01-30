@@ -7,25 +7,35 @@ use std::io::Write;
 use std::path::Path;
 
 #[derive(Debug)]
-struct A<T> where T: Debug {
+struct A<T>
+where
+    T: Debug,
+{
     a: T,
 }
 
-impl<T> A<T> where T: Debug {
+impl<T> A<T>
+where
+    T: Debug,
+{
     fn a(a: T) -> Self {
-        A {
-            a,
-        }
+        A { a }
     }
 }
 
-impl<T> B<T> for A<T> where T: Debug {
+impl<T> B<T> for A<T>
+where
+    T: Debug,
+{
     fn a(&self) -> Option<T> {
         None
     }
 }
 
-trait B<T>: Debug where T: Debug {
+trait B<T>: Debug
+where
+    T: Debug,
+{
     fn a(&self) -> Option<T>;
 }
 
@@ -52,8 +62,14 @@ fn test_realization() {
         }
     }
 
-    File::create("target/test/realization/realization.svg").unwrap().write(&mml::content2svg(vec.clone()).unwrap()).unwrap();
-    File::create("target/test/realization/realization_target.svg").unwrap().write(&mml::content2svg(target.to_string().into_bytes()).unwrap()).unwrap();
+    File::create("target/test/realization/realization.svg")
+        .unwrap()
+        .write(&mml::content2svg(vec.clone()).unwrap())
+        .unwrap();
+    File::create("target/test/realization/realization_target.svg")
+        .unwrap()
+        .write(&mml::content2svg(target.to_string().into_bytes()).unwrap())
+        .unwrap();
 
     assert_eq!(String::from_utf8(vec).unwrap(), target);
 }

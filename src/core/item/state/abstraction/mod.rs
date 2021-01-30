@@ -7,9 +7,9 @@ use self::enumerate::Enum;
 use self::extend::Trait;
 use self::structure::Struct;
 
+pub mod enumerate;
 pub mod extend;
 pub mod structure;
-pub mod enumerate;
 
 /// The structure `Abstract` is a enumerate for abstract element types or none.
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -39,21 +39,17 @@ impl<'a> IntoIterator for &'a Abstract<'a> {
 
     fn into_iter(self) -> Self::IntoIter {
         match self {
-            Abstract::Struct(Struct { fields, .. }) => {
-                fields.iter()
-                    .map(|&(_, _, ref ty): &'a (&'a Visibility, String, String)| ty)
-                    .collect::<Vec<&'a String>>()
-                    .into_iter()
-            }
-            Abstract::Enum(Enum { variants, .. }) => {
-                variants.iter()
-                    .map(|(_,  ty_field)|
-                        ty_field.iter()
-                            .collect::<Vec<&'a String>>())
-                    .collect::<Vec<Vec<&'a String>>>()
-                    .concat()
-                    .into_iter()
-            }
+            Abstract::Struct(Struct { fields, .. }) => fields
+                .iter()
+                .map(|&(_, _, ref ty): &'a (&'a Visibility, String, String)| ty)
+                .collect::<Vec<&'a String>>()
+                .into_iter(),
+            Abstract::Enum(Enum { variants, .. }) => variants
+                .iter()
+                .map(|(_, ty_field)| ty_field.iter().collect::<Vec<&'a String>>())
+                .collect::<Vec<Vec<&'a String>>>()
+                .concat()
+                .into_iter(),
             _ => Vec::default().into_iter(),
         }
     }

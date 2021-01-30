@@ -2,8 +2,8 @@
 extern crate mml;
 
 use std::fs::File;
-use std::path::Path;
 use std::io::Write;
+use std::path::Path;
 
 struct A {}
 
@@ -30,8 +30,14 @@ fn test_dependency() {
         }
     }
 
-    File::create("target/test/dependency/dependency.svg").unwrap().write(&mml::content2svg(vec.clone()).unwrap()).unwrap();
-    File::create("target/test/dependency/dependency_target.svg").unwrap().write(&mml::content2svg(target.to_string().into_bytes()).unwrap()).unwrap();
+    File::create("target/test/dependency/dependency.svg")
+        .unwrap()
+        .write(&mml::content2svg(vec.clone()).unwrap())
+        .unwrap();
+    File::create("target/test/dependency/dependency_target.svg")
+        .unwrap()
+        .write(&mml::content2svg(target.to_string().into_bytes()).unwrap())
+        .unwrap();
 
     assert_eq!(String::from_utf8(vec).unwrap(), target);
 }

@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 extern crate mml;
 
-use std::path::Path;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 
 struct A {}
 
@@ -48,8 +48,14 @@ fn test_association() {
         }
     }
 
-    File::create("target/test/association/association.svg").unwrap().write(&mml::content2svg(vec.clone()).unwrap()).unwrap();
-    File::create("target/test/association/association_target.svg").unwrap().write(&mml::content2svg(target.to_string().into_bytes()).unwrap()).unwrap();
+    File::create("target/test/association/association.svg")
+        .unwrap()
+        .write(&mml::content2svg(vec.clone()).unwrap())
+        .unwrap();
+    File::create("target/test/association/association_target.svg")
+        .unwrap()
+        .write(&mml::content2svg(target.to_string().into_bytes()).unwrap())
+        .unwrap();
 
     assert_eq!(String::from_utf8(vec).unwrap(), target);
 }

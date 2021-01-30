@@ -1,21 +1,21 @@
 //! Core Syntax and definitions.
 
-use std::{iter, slice};
 use std::borrow::Cow;
 use std::ops::BitOr;
 use std::rc::Rc;
+use std::{iter, slice};
 
-use ::dot::{Arrow, Edges, GraphWalk, Id, Labeller, LabelText, Nodes, Style};
-use ::itertools::Itertools;
+use dot::{Arrow, Edges, GraphWalk, Id, LabelText, Labeller, Nodes, Style};
+use itertools::Itertools;
 
-use ::module::path::ModulePath;
+use module::path::ModulePath;
 
-use self::item::{Item, ItemState};
 use self::item::relation::Relation;
+use self::item::{Item, ItemState};
 use self::segment::Segment;
 
-pub mod segment;
 pub mod item;
+pub mod segment;
 
 #[derive(Debug, Clone)]
 pub struct ListItem<'a> {
@@ -24,9 +24,7 @@ pub struct ListItem<'a> {
 
 impl<'a> From<Item<'a>> for ListItem<'a> {
     fn from(parse: Item<'a>) -> ListItem<'a> {
-        ListItem {
-            parse,
-        }
+        ListItem { parse }
     }
 }
 
@@ -40,7 +38,10 @@ impl<'a> Iterator for ListItem<'a> {
     type Item = ItemState<'a>;
 
     fn next(&mut self) -> Option<ItemState<'a>> {
-        self.parse.by_ref().skip_while(|state| state.is_none()).next()
+        self.parse
+            .by_ref()
+            .skip_while(|state| state.is_none())
+            .next()
     }
 }
 
@@ -65,17 +66,18 @@ impl<'a> Labeller<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
     }
 
     fn edge_end_arrow(&'a self, seg: &Segment<'a>) -> Arrow {
-        match (
-            seg.left.as_arrow(&seg.right),
-            seg.right.as_arrow(&seg.left)
-        ) {
+        match (seg.left.as_arrow(&seg.right), seg.right.as_arrow(&seg.left)) {
             (Relation::Association, Relation::Association) => Arrow::none(),
             (edge_left, _) => Arrow::from_arrow(edge_left.as_style()),
         }
     }
 
     fn edge_style(&'a self, seg: &Segment<'a>) -> Style {
-        if seg.left.is_realization(&seg.right).bitor(seg.left.is_dependency(&seg.right)) {
+        if seg
+            .left
+            .is_realization(&seg.right)
+            .bitor(seg.left.is_dependency(&seg.right))
+        {
             Style::Dashed
         } else {
             Style::None
@@ -93,13 +95,17 @@ impl<'a> GraphWalk<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
 
         let dbg = items.iter().map(|s| format!("{:?}", s)).collect::<Vec<_>>();
         println!("{:#?}", dbg);
-        
-        let items = items.iter()
-            .map(|item| items.iter()
-                .filter(|rhs| item.ne(rhs))
-                .filter(|rhs| item.is_relation(rhs))
-                .map(|rhs| Segment::from((item.clone(), rhs.clone())))
-                .collect::<Vec<Segment<'a>>>())
+
+        let items = items
+            .iter()
+            .map(|item| {
+                items
+                    .iter()
+                    .filter(|rhs| item.ne(rhs))
+                    .filter(|rhs| item.is_relation(rhs))
+                    .map(|rhs| Segment::from((item.clone(), rhs.clone())))
+                    .collect::<Vec<Segment<'a>>>()
+            })
             .collect::<Vec<Vec<Segment<'a>>>>()
             .concat()
             .into_iter()
@@ -109,7 +115,11 @@ impl<'a> GraphWalk<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
         Cow::Owned(items)
     }
 
-    fn source(&self, seg: &Segment<'a>) -> ItemState<'a> { seg.left.clone() }
+    fn source(&self, seg: &Segment<'a>) -> ItemState<'a> {
+        seg.left.clone()
+    }
 
-    fn target(&self, seg: &Segment<'a>) -> ItemState<'a> { seg.right.clone() }
+    fn target(&self, seg: &Segment<'a>) -> ItemState<'a> {
+        seg.right.clone()
+    }
 }

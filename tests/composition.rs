@@ -29,8 +29,14 @@ fn test_composition() {
         }
     }
 
-    File::create("target/test/composition/composition.svg").unwrap().write(&mml::content2svg(vec.clone()).unwrap()).unwrap();
-    File::create("target/test/composition/composition_target.svg").unwrap().write(&mml::content2svg(target.to_string().into_bytes()).unwrap()).unwrap();
+    File::create("target/test/composition/composition.svg")
+        .unwrap()
+        .write(&mml::content2svg(vec.clone()).unwrap())
+        .unwrap();
+    File::create("target/test/composition/composition_target.svg")
+        .unwrap()
+        .write(&mml::content2svg(target.to_string().into_bytes()).unwrap())
+        .unwrap();
 
     assert_eq!(String::from_utf8(vec).unwrap(), target);
 }
