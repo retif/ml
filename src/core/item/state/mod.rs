@@ -39,26 +39,22 @@ impl<'a> ItemState<'a> {
     }
 
     pub fn is_association(&self, rhs: &ItemState<'a>) -> bool {
-        if let Some(ref name) = self.as_name() {
-            let ref ty_name: String = name.to_string();
-
+        if let Some(ty_name) = self.as_name() {
             rhs.method.iter()
                 .any(|func| func.is_association(ty_name))
                 .bitor(rhs.implem.iter()
-                    .any(|implem| implem.is_association(&ty_name)))
+                    .any(|implem| implem.is_association(ty_name)))
         } else {
             false
         }
     }
 
     pub fn is_dependency(&self, rhs: &ItemState<'a>) -> bool {
-        if let Some(ref name) = self.as_name() {
-            let ref ty_name: String = name.to_string();
-
+        if let Some(ty_name) = self.as_name() {
             rhs.method.iter()
-                .any(|method| method.is_dependency(&ty_name))
+                .any(|method| method.is_dependency(ty_name))
                 .bitor(self.implem.iter()
-                    .any(|implem| implem.is_dependency(&ty_name)))
+                    .any(|implem| implem.is_dependency(ty_name)))
         } else {
             false
         }

@@ -57,14 +57,14 @@ impl<'a> Labeller<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
     }
 
     fn node_shape(&'a self, _node: &ItemState<'a>) -> Option<LabelText<'a>> {
-        Some(LabelText::LabelStr(Cow::from(format!("record"))))
+        Some(LabelText::LabelStr(Cow::from("record")))
     }
 
     fn node_label(&'a self, state: &ItemState<'a>) -> LabelText<'a> {
-        LabelText::LabelStr(format!("{}", state).into())
+        LabelText::LabelStr(state.to_string().into())
     }
 
-    fn edge_end_arrow(&'a self, ref seg: &Segment<'a>) -> Arrow {
+    fn edge_end_arrow(&'a self, seg: &Segment<'a>) -> Arrow {
         match (
             seg.left.as_arrow(&seg.right),
             seg.right.as_arrow(&seg.left)
@@ -74,7 +74,7 @@ impl<'a> Labeller<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
         }
     }
 
-    fn edge_style(&'a self, ref seg: &Segment<'a>) -> Style {
+    fn edge_style(&'a self, seg: &Segment<'a>) -> Style {
         if seg.left.is_realization(&seg.right).bitor(seg.left.is_dependency(&seg.right)) {
             Style::Dashed
         } else {

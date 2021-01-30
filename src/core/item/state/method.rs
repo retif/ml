@@ -28,10 +28,10 @@ pub struct Method<'a> {
 }
 
 impl<'a> Method<'a> {
-    pub fn is_association(&self, ty_name: &String) -> bool {
+    pub fn is_association(&self, ty_name: &str) -> bool {
         self.func.iter()
-            .any(|&(_, _, _, ref result)|
-                if let &Some(ret) = result {
+            .any(|(_, _, _, result)|
+                if let Some(ret) = result {
                     // TODO: replace by checking if ret (which is of type Type)
                     // TODO: contains ty_name anywhere
                     ret.to_token_stream().to_string().split(|at| "<[(;, )]>".contains(at))
@@ -42,9 +42,9 @@ impl<'a> Method<'a> {
             )
     }
 
-    pub fn is_dependency(&self, name: &String) -> bool {
+    pub fn is_dependency(&self, name: &str) -> bool {
         self.func.iter()
-            .any(|&(_, _, ref arg, _): &(&'a Visibility, String, &'a Punctuated<FnArg, Comma>, Option<&'a Box<Type>>)|
+            .any(|(_, _, arg, _)|
                 arg.iter().filter_map(|ty| {
                     if let FnArg::Typed(ty) = ty {
                         Some(ty)

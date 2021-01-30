@@ -1,6 +1,6 @@
-use super::ItemState;
+use ::dot::{ArrowShape, Fill, Side};
 
-use ::dot::{Fill, ArrowShape, Side};
+use super::ItemState;
 
 /// The enumeration `Relation` is the relationship specification from [UML 2.5](http://www.omg.org/spec/UML/2.5) without generalization.
 #[derive(Debug, Copy, Clone)]
@@ -18,12 +18,12 @@ impl Relation {
     /// The method `as_style` returns a stylized arrow (See *Table B.2 UML Edges* from [UML 2.5](http://www.omg.org/spec/UML/2.5).
     pub fn as_style(&self) -> ArrowShape {
         match self {
-            &Relation::Association => ArrowShape::Vee(Side::Both),
-            &Relation::Dependency => ArrowShape::Vee(Side::Both),
-            &Relation::Aggregation => ArrowShape::Diamond(Fill::Open, Side::Both),
-            &Relation::Composition => ArrowShape::Diamond(Fill::Filled, Side::Both),
-            &Relation::Realization => ArrowShape::Normal(Fill::Open, Side::Both),
-            &Relation::None => ArrowShape::NoArrow,
+            Relation::Association => ArrowShape::Vee(Side::Both),
+            Relation::Dependency => ArrowShape::Vee(Side::Both),
+            Relation::Aggregation => ArrowShape::Diamond(Fill::Open, Side::Both),
+            Relation::Composition => ArrowShape::Diamond(Fill::Filled, Side::Both),
+            Relation::Realization => ArrowShape::Normal(Fill::Open, Side::Both),
+            Relation::None => ArrowShape::NoArrow,
         }
     }
 }

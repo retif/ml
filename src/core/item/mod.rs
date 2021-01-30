@@ -1,25 +1,23 @@
-pub mod relation;
-pub mod state;
-
-pub use self::state::ItemState;
-
-use std::{slice, iter};
+use std::{iter, slice};
 use std::rc::Rc;
 
 use ::itertools::Itertools;
 
 use ::module::path::ModulePath;
 
-/// The structure Item is a iterable collection of abstract elements.
+pub use self::state::ItemState;
 
+pub mod relation;
+pub mod state;
+
+/// The structure Item is a iterable collection of abstract elements.
 #[derive(Debug, Clone)]
-pub struct Item <'a> {
+pub struct Item<'a> {
     /// Iterator.
     it: iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>,
 }
 
-impl <'a>From<iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>> for Item<'a> {
-
+impl<'a> From<iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>> for Item<'a> {
     /// The constructor method `from` returns a typed and iterable collection of abstract element.
     fn from(iter: iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>) -> Item {
         Item {
@@ -28,7 +26,7 @@ impl <'a>From<iter::Peekable<slice::Iter<'a, (syn::Item, Rc<ModulePath>)>>> for 
     }
 }
 
-impl <'a>Iterator for Item<'a> {
+impl<'a> Iterator for Item<'a> {
     type Item = ItemState<'a>;
 
     /// The method `next` will returns the first abstract elements defined like a structure,
@@ -37,14 +35,12 @@ impl <'a>Iterator for Item<'a> {
         self.it.next().and_then(|item| {
             let mut list: Vec<&'a (syn::Item, Rc<ModulePath>)> = vec!(item);
 
-            list.extend(self.it.peeking_take_while(|&&(ref item, _): &&'a (syn::Item, Rc<ModulePath>)| {
-                            if let syn::Item::Impl(_) = item {
-                                true
-                            } else {
-                                false
-                            }
-                        })
-                        .collect::<Vec<&'a (syn::Item, Rc<ModulePath>)>>());
+            list.extend(self.it.peeking_take_while(|(item, _)|
+                if let syn::Item::Impl(_) = item {
+                    true
+                } else {
+                    false
+                }));
             Some(ItemState::from(list))
         })
     }

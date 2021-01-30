@@ -47,9 +47,8 @@ impl<'a> IntoIterator for &'a Abstract<'a> {
             }
             Abstract::Enum(Enum { variants, .. }) => {
                 variants.iter()
-                    .map(|&(_, ref ty_field): &'a (String, Vec<String>)|
+                    .map(|(_,  ty_field)|
                         ty_field.iter()
-                            .map(|ty: &'a String| ty)
                             .collect::<Vec<&'a String>>())
                     .collect::<Vec<Vec<&'a String>>>()
                     .concat()

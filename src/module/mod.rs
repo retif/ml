@@ -35,7 +35,7 @@ impl IntoIterator for Module {
     type IntoIter = vec::IntoIter<(Item, Rc<ModulePath>)>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let ref rc: Rc<ModulePath> = Rc::new(self.path);
+        let rc = &Rc::new(self.path);
         self.list.into_iter()
                  .map(|item| (item, Rc::clone(rc)))
                  .collect::<Vec<(Item, Rc<ModulePath>)>>()
