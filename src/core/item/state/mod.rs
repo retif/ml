@@ -126,20 +126,16 @@ impl<'a> From<(Abstract<'a>, Vec<&'a (Item, Rc<ModulePath>)>)> for ItemState<'a>
         ItemState {
             node,
             method: properties.iter()
-                .filter_map(|&&(ref item, ref path): &&'a (Item, Rc<ModulePath>)|
+                .filter_map(|(item, path)|
                     match item {
                         Item::Impl(ItemImpl { trait_, items, .. })
-                        if trait_.is_none() => {
-                            Some(Method::from((items, Rc::clone(path))))
-                        }
-                        _ => {
-                            None
-                        }
+                        if trait_.is_none() => Some(Method::from((items, Rc::clone(path)))),
+                        _ => None,
                     }
                 )
                 .collect(),
             implem: properties.iter()
-                .filter_map(|&&(ref item, _): &&'a (Item, Rc<ModulePath>)|
+                .filter_map(|(item, _)|
                     if let Item::Impl(ItemImpl { trait_: Some((_, Path { segments, .. }, _)), items, .. }) = item {
                         Some(Implem::from((segments, items)))
                     } else {

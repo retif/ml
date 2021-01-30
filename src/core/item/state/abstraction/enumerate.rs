@@ -50,9 +50,9 @@ impl<'a> fmt::Display for Enum<'a> {
             write!(f, "&lt;&lt;&lt;Enumeration&gt;&gt;&gt;\n{name}|{variants}",
                    name = self.name,
                    variants = escape_html(self.variants.iter()
-                       .map(|&(ref name, ref struct_field): &(String, Vec<String>)|
+                       .map(|( name,  struct_field)|
                            if struct_field.is_empty() {
-                               format!("{}", name)
+                               name.to_owned()
                            } else {
                                format!("{}({})", name, struct_field.join(", "))
                            }

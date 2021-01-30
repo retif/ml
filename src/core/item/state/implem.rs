@@ -17,7 +17,7 @@ pub struct Implem {
 }
 
 impl Implem {
-    pub fn is_realization(&self, ty_name: &String) -> bool {
+    pub fn is_realization(&self, ty_name: &str) -> bool {
         if let Some(&(ref name, _)) = self.ty.first() {
             name.to_string().eq(ty_name)
         } else {
@@ -25,10 +25,10 @@ impl Implem {
         }
     }
 
-    pub fn is_association(&self, ty_name: &String) -> bool {
+    pub fn is_association(&self, ty_name: &str) -> bool {
         self.method.iter()
-            .any(|&(_, _, ref result): &(String, Vec<String>, Option<String>)|
-                if let &Some(ref ret) = result {
+            .any(|(_, _,  result)|
+                if let Some(ret) = result {
                     ret.split(|at| "<[(;, )]>".contains(at))
                         .any(|ty| ty.eq(ty_name))
                 } else {
@@ -37,7 +37,7 @@ impl Implem {
             )
     }
 
-    pub fn is_dependency(&self, _: &String) -> bool {
+    pub fn is_dependency(&self, _: &str) -> bool {
         false
         /*self.method.iter()
                    .any(|&( _, ref arg, _): &(String, Vec<String>, Option<String>)|
@@ -100,7 +100,7 @@ impl fmt::Display for Implem {
         write!(f, "{item}",
                item = escape_html(self.method.iter()
                    .map(|&(ref name, ref args, ref result): &(String, Vec<String>, Option<String>)| {
-                       if let &Some(ref ret) = result {
+                       if let Some(ret) = result {
                            format!("{}{}({}) -> {}", DEFAULT_FUNC, name, args.join(", "), ret)
                        } else {
                            format!("{}{}({})", DEFAULT_FUNC, name, args.join(", "))

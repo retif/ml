@@ -29,11 +29,11 @@ impl<'a> From<((&'a ItemTrait, &'a Vec<TypeParam>, &'a Vec<TraitItem>), Rc<Modul
             items: trait_item.iter()
                 .filter_map(|item: &TraitItem|
                     if let TraitItem::Method(TraitItemMethod { sig: Signature { ident, inputs, output: ReturnType::Type(_, output), .. }, .. }) = item {
-                        Some((ident.to_string(), inputs.iter().filter_map(|input| {
+                        Some((ident.to_string(), inputs.iter().map(|input| {
                             dbg!(input);
                             match input {
                                 FnArg::Typed(PatType { ty, .. }) => {
-                                    Some(ty.to_token_stream().to_string())
+                                    ty.to_token_stream().to_string()
                                 }
                                 FnArg::Receiver(Receiver { reference, mutability, .. }) => { // FIXME
                                     let (r1, r2) = match reference {
@@ -42,7 +42,7 @@ impl<'a> From<((&'a ItemTrait, &'a Vec<TypeParam>, &'a Vec<TraitItem>), Rc<Modul
                                     };
                                     let mutability = Some(mutability.to_token_stream().to_string());
                                     let s = Some(" Self".into());
-                                    Some([r1, r2, mutability, s].iter().flatten().map(ToString::to_string).collect())
+                                    [r1, r2, mutability, s].iter().flatten().map(ToString::to_string).collect()
                                 }
                             }
                         }).collect(), output.to_token_stream().to_string()))
