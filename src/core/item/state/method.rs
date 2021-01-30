@@ -2,8 +2,8 @@ use std::fmt;
 use std::rc::Rc;
 
 use ::dot::escape_html;
+use quote::{TokenStreamExt, ToTokens};
 use syn::{
-    export::ToTokens,
     FnArg,
     ImplItem,
     ImplItemMethod,

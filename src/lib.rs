@@ -23,6 +23,7 @@ extern crate dot;
 extern crate itertools;
 extern crate syn;
 extern crate walkdir;
+extern crate quote;
 
 use std::ffi::OsStr;
 use std::fs::{self, File};

@@ -32,8 +32,8 @@ debug         = [] # for building with debug messages
 travis        = ["lints", "nightly"] # for building with travis-cargo
 
 [dependencies]
-syn = { features = [ "full", "default", "extra-traits", "derive", "parsing", "printing", "clone-impls", "proc-macro" ], version = "1.0.14" }
-quote = "1.0.2"
+syn = { features = [ "full", "default", "extra-traits", "derive", "parsing", "printing", "clone-impls", "proc-macro" ], version = "1.0" }
+quote = "1.0"
 
 [dependencies.rustc-serialize]
 version = "0.3"

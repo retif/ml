@@ -1,8 +1,8 @@
 use std::fmt;
 
 use ::dot::escape_html;
+use quote::{TokenStreamExt, ToTokens};
 use syn::{AngleBracketedGenericArguments, FnArg, GenericArgument, ImplItem, ImplItemMethod, PathArguments, PathSegment, ReturnType, Signature};
-use syn::export::ToTokens;
 use syn::punctuated::Punctuated;
 use syn::token::Colon2;
 

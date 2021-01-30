@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use ::dot::escape_html;
 use syn::{Field, ItemStruct, Visibility};
-use syn::export::ToTokens;
+use quote::{ToTokens, TokenStreamExt};
 
 use ::module::path::ModulePath;
 
