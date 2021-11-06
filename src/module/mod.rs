@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::ffi::OsString;
 use std::vec;
 
-use syntex_syntax::{ast, ptr};
+use rustc_ast::{ast, ptr};
 
 pub mod path;
 

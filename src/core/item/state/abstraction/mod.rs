@@ -6,10 +6,10 @@ use std::fmt;
 use std::vec;
 use std::rc::Rc;
 
-use ::syntex_syntax::symbol;
-use ::core::ast;
+use rustc_span::symbol;
+use rustc_ast::{ast, ptr};
 
-use ::module::path::ModulePath;
+use crate::module::path::ModulePath;
 
 use self::extend::Trait;
 use self::structure::Struct;
@@ -29,7 +29,7 @@ impl <'a> Abstract <'a> {
 
     /// The method `as_name` returns the name of the abstract element
     /// or else declare a panic.
-    pub fn as_name(&self) -> Option<&symbol::InternedString> {
+    pub fn as_name(&self) -> Option<&symbol::Symbol> {
         match self {
             &Abstract::Trait(Trait { vis: _, ref name, ..}) => Some(name),
             &Abstract::Struct(Struct { vis: _, ref name, ..}) => Some(name),
@@ -47,13 +47,13 @@ impl<'a> IntoIterator for &'a Abstract<'a> {
         match self {
             &Abstract::Struct(Struct {path: _, vis: _, name: _, fields: ref ty_field}) => {
                 ty_field.iter()
-                        .map(|&(_, _, ref ty): &'a (&'a ast::Visibility, symbol::InternedString, String)| ty)
+                        .map(|&(_, _, ref ty): &'a (&'a ast::VisibilityKind, symbol::Symbol, String)| ty)
                         .collect::<Vec<&'a String>>()
                         .into_iter()
             },
             &Abstract::Enum(Enum {path: _, vis: _, name: _, params: _, variants: ref ty_multi_field}) => {
                 ty_multi_field.iter()
-                              .map(|&(_, ref ty_field): &'a (symbol::InternedString, Vec<String>)| 
+                              .map(|&(_, ref ty_field): &'a (symbol::Symbol, Vec<String>)| 
                                    ty_field.iter()
                                            .map(|ty: &'a String| ty)
                                            .collect::<Vec<&'a String>>())
@@ -74,20 +74,20 @@ impl <'a> Default for Abstract<'a> {
     }
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::TraitItem>), Rc<ModulePath>)> for Abstract<'a> {
-    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::TraitItem>), Rc<ModulePath>)) -> Abstract<'a> {
+impl <'a>From<((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ptr::P<ast::Item<ast::AssocItemKind>>>), Rc<ModulePath>)> for Abstract<'a> {
+    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ptr::P<ast::Item<ast::AssocItemKind>>>), Rc<ModulePath>)) -> Abstract<'a> {
         Abstract::Trait(Trait::from(arguments))
     }
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::StructField>), Rc<ModulePath>)> for Abstract<'a> {
-    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::StructField>), Rc<ModulePath>)) -> Abstract<'a> {
+impl <'a>From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Abstract<'a> {
+    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)) -> Abstract<'a> {
         Abstract::Struct(Struct::from(arguments))
     }
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)> for Abstract<'a> {
-    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)) -> Abstract<'a> {
+impl <'a>From<((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)> for Abstract<'a> {
+    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)) -> Abstract<'a> {
         Abstract::Enum(Enum::from(arguments))
     }
 }

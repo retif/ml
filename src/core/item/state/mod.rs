@@ -17,10 +17,10 @@ use std::ops::BitOr;
 use std::fmt;
 use std::rc::Rc;
 
-use ::syntex_syntax::symbol::InternedString;
-use ::syntex_syntax::{ptr, ast};
+use rustc_span::symbol::Symbol;
+use rustc_ast::{ptr, ast};
 
-use ::module::path::ModulePath;
+use crate::module::path::ModulePath;
 
 /// The structure `ItemState` describes an abstract element with a collections of methodes
 /// and implementations.
@@ -29,7 +29,7 @@ pub struct ItemState<'a> {
     /// Data Type.
     node: Abstract<'a>,
     /// Implementation of Method.
-    method: Vec<Method<'a>>,
+    method: Vec<Method>,
     /// Implementation of Trait.
     implem: Vec<Implem>,
 }
@@ -71,8 +71,8 @@ impl <'a> ItemState <'a> {
             let mut ty_name_mut: String = String::from("*mut ");
             let mut ty_name_const: String = String::from("*const ");
             
-            ty_name_mut.push_str(&name);
-            ty_name_const.push_str(&name);
+            ty_name_mut.push_str(&name.as_str());
+            ty_name_const.push_str(&name.as_str());
             rhs.node.into_iter()
                     .any(|attribut: &String|
                           attribut.split(|at| "<[(;,)]>".contains(at))
@@ -114,7 +114,7 @@ impl <'a> ItemState <'a> {
             .bitor(self.is_realization(rhs))
     }
 
-    pub fn as_name(&self) -> Option<&InternedString> {
+    pub fn as_name(&self) -> Option<&Symbol> {
         self.node.as_name()
     }
 
@@ -128,18 +128,23 @@ impl <'a>From<(Abstract<'a>, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>)> for 
         ItemState {
             node: node,
             method: properties.iter()
-                .filter_map(|&&(ref item, ref path): (&&'a (ptr::P<ast::Item>, Rc<ModulePath>))|
-                    if let ast::ItemKind::Impl(_, _, _, _, None, _, ref impl_item) = item.node {
-                        Some(Method::from((impl_item, Rc::clone(path))))
+                .filter_map(|&&(ref item, ref path): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)|
+                    if let ast::ItemKind::Impl(_b) = item.kind.clone() {
+                        Some(Method::from((vec![(**item).clone()], Rc::clone(path))))
                     } else {
                         None
                     }
                 )
                 .collect::<Vec<Method>>(),
             implem: properties.iter()
-                .filter_map(|&&(ref item, _): (&&'a (ptr::P<ast::Item>, Rc<ModulePath>))|
-                    if let ast::ItemKind::Impl(_, _, _, _, Some(ast::TraitRef {path: ast::Path {span: _, ref segments}, ..}), _, ref impl_item) = item.node {
-                        Some(Implem::from((segments, impl_item)))
+                .filter_map(|&&(ref item, _): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)|
+                    if let ast::ItemKind::Impl(b) = &item.kind {
+                        let ast::ImplKind { of_trait, .. } = &**b;
+                        if let Some(ast::TraitRef {path: ast::Path {span: _, ref segments, ..}, ..}) = of_trait {
+                            Some(Implem::from((segments, &vec![(**item).clone()])))
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }
@@ -152,22 +157,22 @@ impl <'a>From<(Abstract<'a>, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>)> for 
 impl <'a>From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
     fn from(state: Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) -> ItemState<'a> {
         state.split_first().and_then(|(&&(ref item, ref path), properties): (&&'a (ptr::P<ast::Item>, Rc<ModulePath>), &[&'a (ptr::P<ast::Item>, Rc<ModulePath>)])| {
-            match &item.node {
-                /// Trait.
-                &ast::ItemKind::Trait(_, ast::Generics {lifetimes: _, ref ty_params, ..}, _, ref trait_item) => {
-                    let kind: (&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::TraitItem>) = (item, ty_params, trait_item);
+            match &item.kind {
+                // Trait.
+                &ast::ItemKind::Trait(box ast::TraitKind(_, _, ast::Generics {ref params, ..}, _, ref trait_item)) => {
+                    let kind: (&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ptr::P<ast::AssocItem>>) = (item, params, trait_item);
                     let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) = (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
                     Some(ItemState::from(kind))
                 },
-                /// Structure with variables.
+                // Structure with variables.
                 &ast::ItemKind::Struct(ast::VariantData::Struct(ref struct_field, _), ..) => {
-                    let kind: (&'a ast::Item, &'a Vec<ast::StructField>) = (item, struct_field);
+                    let kind: (&'a ast::Item, &'a Vec<ast::FieldDef>) = (item, struct_field);
                     let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) = (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
                     Some(ItemState::from(kind))
                 },
-                /// Enumeration with variables.
-                &ast::ItemKind::Enum(ast::EnumDef {ref variants}, ast::Generics {lifetimes: _, ref ty_params, ..}) => {
-                    let kind: (&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>) = (item, ty_params, variants);
+                // Enumeration with variables.
+                &ast::ItemKind::Enum(ast::EnumDef {ref variants}, ast::Generics {ref params, ..}) => {
+                    let kind: (&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>) = (item, params, variants);
                     let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) = (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
                     Some(ItemState::from(kind))
                 },
@@ -176,6 +181,7 @@ impl <'a>From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
         }).unwrap_or_default()
     }
 }
+
 
 impl <'a>fmt::Display for ItemState<'a> {
 

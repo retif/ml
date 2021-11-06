@@ -1,6 +1,10 @@
 #![crate_name="mml"]
 #![crate_type= "lib"]
 
+#![feature(rustc_private)]
+#![feature(box_patterns)]
+
+
 #![doc(html_root_url = "https://docs.rs/mml/0.1.41")]
 
 #![cfg_attr(feature = "nightly", feature(plugin))]
@@ -19,11 +23,22 @@
 
 //! ![uml](ml.svg)
 
-extern crate syntex_syntax;
-extern crate syntex_errors;
 extern crate itertools;
 extern crate walkdir;
 extern crate dot;
+
+extern crate rustc_ast;
+extern crate rustc_ast_pretty;
+extern crate rustc_errors;
+extern crate rustc_error_codes;
+extern crate rustc_session;
+extern crate rustc_span;
+extern crate rustc_serialize;
+extern crate rustc_hir;
+extern crate rustc_parse;
+extern crate rustc_hash;
+extern crate rustc_interface;
+
 
 pub mod prelude;
 pub mod module;
@@ -36,15 +51,15 @@ use std::fs::{self, File};
 use std::ffi::OsStr;
 use std::rc::Rc;
 
-use syntex_errors::emitter::ColorConfig;
-use syntex_errors::Handler;
+use rustc_errors::emitter::ColorConfig;
+use rustc_errors::Handler;
 
-use syntex_syntax::codemap::{CodeMap, FilePathMapping};
-use syntex_syntax::parse::{self, ParseSess};
-use syntex_syntax::{ast, ptr};
+use rustc_session::parse::ParseSess;
+use rustc_ast::{ast, ptr};
+use rustc_span::source_map::{SourceMap, FilePathMapping};
 
 use walkdir::WalkDir;
-use core::ListItem;
+use crate::core::ListItem;
 use module::Module;
 use module::path::ModulePath;
 
@@ -53,16 +68,41 @@ pub const DEFAULT_NAME_DOT: &'static str = "ml.dot";
 /// The default name of *image/svg* file.
 pub const DEFAULT_NAME_PNG: &'static str = "ml.svg";
 
-/// The function `file2crate` returns a syntex module.
-fn file2crate<P: AsRef<Path>>(path: P) -> io::Result<ast::Crate> {
-    let codemap = Rc::new(CodeMap::new(FilePathMapping::empty()));
-    let tty_handler =
-        Handler::with_tty_emitter(ColorConfig::Auto, true, false, Some(codemap.clone()));
-    let parse_session: ParseSess = ParseSess::with_span_handler(tty_handler, codemap.clone());
-    let parse = parse::parse_crate_from_file(path.as_ref(), &parse_session);
-    let ast: ast::Crate = parse.unwrap();
+#[derive(Clone)]
+struct CrateSend(pub ast::Crate);
 
+unsafe impl Send for CrateSend {}
+
+impl AsRef<CrateSend> for CrateSend {
+    fn as_ref(&self) -> &CrateSend {
+        &self
+    }
+}
+
+/// The function `file2crate` returns a syntex module.
+fn file2crate(path: &Path) -> io::Result<ast::Crate> {
+    let sourcemap = Rc::new(SourceMap::new(FilePathMapping::empty()));
+    let tty_handler =
+        Handler::with_tty_emitter(ColorConfig::Auto, true, None, Some(sourcemap.clone()));
+    let parse_session: ParseSess = ParseSess::with_span_handler(tty_handler, sourcemap.clone());
+    let parse = rustc_parse::parse_crate_from_file(path.as_ref(), &parse_session);
+
+    let ast: ast::Crate = parse.unwrap();
     Ok(ast)
+
+    // An alternate way of doing this.
+    // let session = rustc_session::build_session(
+    //     rustc_session::config::Options::default(), 
+    //     None,  // local_crate_source_file
+    //     rustc_errors::registry::Registry::new(&[]),
+    //     rustc_session::DiagnosticOutput::Default,
+    //     FxHashMap::default(), // driver_lint_caps
+    //     None,  // file_loader
+    //     None,  // target_override
+    // );
+    // let parse = rustc_parse::parse_crate_from_file(path.as_ref(), &session.parse_sess);
+    // let ast: ast::Crate = parse.unwrap();
+    // Ok(ast)
 }
 
 /// The function `items2chars` returns a graph formated for *Graphiz/Dot*.
@@ -88,7 +128,9 @@ fn items2chars<'a>(modules: Vec<Module>) -> io::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
-    file2crate(path.as_ref()).and_then(|parse: ast::Crate| items2chars(vec![Module::from((parse.module.items, path.as_ref().to_path_buf()))]))
+    rustc_span::create_session_if_not_set_then( rustc_span::edition::LATEST_STABLE_EDITION, |_sg| {
+        file2crate(path.as_ref()).and_then(|parse: ast::Crate| items2chars(vec![Module::from((parse.items, path.as_ref().to_path_buf()))]))
+    })
 }
 
 /// The function `src2dot` returns graphed repository of modules.
@@ -102,19 +144,21 @@ pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn src2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
-    items2chars(WalkDir::new(path).into_iter()
-                                 .filter_map(|entry: Result<walkdir::DirEntry, _>| entry.ok())
-                                 .filter(|entry| entry.file_type().is_file())
-                                 .filter_map(|entry: walkdir::DirEntry| {
-                                     let path: &Path = entry.path();
+    rustc_span::create_session_if_not_set_then( rustc_span::edition::LATEST_STABLE_EDITION, |_sg| {
+        items2chars(WalkDir::new(path).into_iter()
+                                    .filter_map(|entry: Result<walkdir::DirEntry, _>| entry.ok())
+                                    .filter(|entry| entry.file_type().is_file())
+                                    .filter_map(|entry: walkdir::DirEntry| {
+                                        let path: &Path = entry.path();
 
-                                     if path.extension().eq(&Some(OsStr::new("rs"))) {
-                                         file2crate(path).ok().and_then(|parse| Some(Module::from((parse.module.items, path.to_path_buf()))))
-                                     } else {
-                                         None
-                                     }
-                                 })
-                                 .collect::<Vec<Module>>())
+                                        if path.extension().unwrap().eq(OsStr::new("rs")) {
+                                            file2crate(path).ok().and_then(|parse| Some(Module::from((parse.items, path.to_path_buf()))))
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect::<Vec<Module>>())
+    })
 }
 
 /// The function `content2svg` returns structured vector graphics content of modules.
@@ -142,7 +186,9 @@ fn content2svg(buf: Vec<u8>) -> io::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn rs2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
-    rs2dot(path).and_then(|buf| content2svg(buf))
+    rustc_span::create_session_if_not_set_then( rustc_span::edition::LATEST_STABLE_EDITION, |_sg| {
+        rs2dot(path).and_then(|buf| content2svg(buf))
+    })
 }
 
 /// The function `src2svg` returns structured vector graphics repository of modules.
@@ -156,7 +202,9 @@ pub fn rs2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn src2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
-    src2dot(path).and_then(|buf| content2svg(buf))
+    rustc_span::create_session_if_not_set_then( rustc_span::edition::LATEST_STABLE_EDITION, |_sg| {
+        src2dot(path).and_then(|buf| content2svg(buf))
+    })
 }
 
 /// The function `src2both` creates two files formated like a graph/dot and a structured vector graphics.
@@ -172,15 +220,23 @@ pub fn src2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn src2both<P: AsRef<Path>>(src: P, dest: P) -> io::Result<()> {
-    let _ = fs::create_dir_all(dest.as_ref())?;
-    let mut file_dot = File::create(dest.as_ref().join(DEFAULT_NAME_DOT))?;
-    let mut file_svg = File::create(dest.as_ref().join(DEFAULT_NAME_PNG))?;
 
-    let content_dot: Vec<u8> = src2dot(src)?;
-    let _ = file_dot.write_all(content_dot.as_slice())?;
+    fn worker<P: AsRef<Path>>(src: P, dest: P) -> io::Result<()> {
+        let _ = fs::create_dir_all(dest.as_ref())?;
+        let mut file_dot = File::create(dest.as_ref().join(DEFAULT_NAME_DOT))?;
+        let mut file_svg = File::create(dest.as_ref().join(DEFAULT_NAME_PNG))?;
 
-    let content_svg: Vec<u8> = content2svg(content_dot)?;
-    let _ = file_svg.write_all(content_svg.as_slice())?;
+        let content_dot: Vec<u8> = src2dot(src)?;
+        let _ = file_dot.write_all(content_dot.as_slice())?;
+
+        let content_svg: Vec<u8> = content2svg(content_dot)?;
+        let _ = file_svg.write_all(content_svg.as_slice())?;
+        Ok(())
+    }
+
+    rustc_span::create_session_if_not_set_then( rustc_span::edition::LATEST_STABLE_EDITION, |_sg| {
+        worker(src, dest)
+    })?;
 
     Ok(())
 }

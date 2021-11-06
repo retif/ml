@@ -4,27 +4,50 @@ use std::ops::Deref;
 use std::fmt;
 use std::rc::Rc;
 
-use ::syntex_syntax::print::pprust::{ty_to_string, arg_to_string};
-use ::syntex_syntax::symbol::InternedString;
-use ::syntex_syntax::ast;
+use rustc_ast_pretty::pprust::{ty_to_string, state, state::PrintState};
+use rustc_span::symbol;
+use rustc_ast::ast;
 
-use ::module::path::ModulePath;
+use crate::module::path::ModulePath;
 
-use ::dot::escape_html;
+use crate::dot::escape_html;
 
 /// The structure `Method` is a collection of methods from a abstract element.
 
-#[derive(Default, Debug, Clone, Eq, PartialEq)]
-pub struct Method <'a> {
+#[derive(Default, Debug, Clone)]
+pub struct Method {
     /// visibility, method's name, arguments, result.
-    func: Vec<(&'a ast::Visibility, InternedString, Vec<String>, Option<String>)>,
+    func: Vec<(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)>,
     path: Rc<ModulePath>,
 }
 
-impl <'a> Method <'a> {
+impl PartialEq for Method {
+    fn eq(&self, b: &Self) -> bool {
+
+        let a = self;
+
+        // ignore func for now, as it uses Visibility.
+
+        // use ast::VisibilityKind::*;
+        // let bvis = match (a.vis, b.vis) {
+        //     (Public, Public) => true,
+        //     (Crate(_), Crate(_)) => true,
+        //     (Restricted{..}, Restricted{..}) => true,
+        //     (Inherited, Inherited) => true,
+        //     _ => false,
+        // };
+
+        a.path == b.path
+    }
+}
+
+impl Eq for Method {}
+
+
+impl Method {
     pub fn is_association(&self, ty_name: &String) -> bool {
         self.func.iter()
-                 .any(|&(_, _, _, ref result): &(&'a ast::Visibility, InternedString, Vec<String>, Option<String>)|
+                 .any(|&(_, _, _, ref result): &(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)|
                      if let &Some(ref ret) = result {
                          ret.split(|at| "<[(;, )]>".contains(at))
                             .any(|ty| ty.eq(ty_name))
@@ -36,13 +59,13 @@ impl <'a> Method <'a> {
 
     pub fn is_dependency(&self, name: &String) -> bool {
         self.func.iter()
-                 .any(|&(_, _, ref arg, _): &(&'a ast::Visibility, InternedString, Vec<String>, Option<String>)|
+                 .any(|&(_, _, ref arg, _): &(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)|
                      arg.iter().any(|ty| ty.ends_with(name)))
     }
 }
 
-impl <'a> From<(Vec<(&'a ast::Visibility, InternedString, Vec<String>, Option<String>)>, Rc<ModulePath>)> for Method<'a> {
-    fn from((func, path): (Vec<(&'a ast::Visibility, InternedString, Vec<String>, Option<String>)>, Rc<ModulePath>)) -> Method<'a> {
+impl From<(Vec<(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)>, Rc<ModulePath>)> for Method {
+    fn from((func, path): (Vec<(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)>, Rc<ModulePath>)) -> Method {
         Method {
             func: func,
             path: path,
@@ -50,37 +73,50 @@ impl <'a> From<(Vec<(&'a ast::Visibility, InternedString, Vec<String>, Option<St
     }
 }
 
-impl <'a> From<(&'a Vec<ast::ImplItem>, Rc<ModulePath>)> for Method<'a> {
-    fn from((impl_item, path): (&'a Vec<ast::ImplItem>, Rc<ModulePath>)) -> Method<'a> {
+impl From<(Vec<ast::Item>, Rc<ModulePath>)> for Method {
+    fn from((impl_item, path): (Vec<ast::Item>, Rc<ModulePath>)) -> Method {
         Method::from((impl_item.iter()
-                              .filter_map(|&ast::ImplItem {id: _, ident: ast::Ident { name, ..}, ref vis, defaultness: _, attrs: _, ref node, .. }| {
-                                     if let &ast::ImplItemKind::Method(ast::MethodSig {unsafety: _, constness: _, abi: _, ref decl, ..}, _) = node {
-                                         if let &ast::FnDecl {ref inputs, output: ast::FunctionRetTy::Ty(ref ty), ..} = decl.deref() {
-                                             Some((vis, name.as_str(), inputs.iter().map(|ref arg| arg_to_string(&arg)).collect::<Vec<String>>(), Some(ty_to_string(&ty))))
-                                         } else if let &ast::FnDecl {ref inputs, output: ast::FunctionRetTy::Default(_), ..} = decl.deref() {
-                                             Some((vis, name.as_str(), inputs.iter().map(|ref arg| arg_to_string(&arg)).collect::<Vec<String>>(), None))
-                                         } else {
-                                             None
-                                         }
-                                     } else {
-                                         None
-                                     }
-                               })
-                               .collect::<Vec<(&'a ast::Visibility, InternedString, Vec<String>, Option<String>)>>(),
-                      path))
+                .flat_map(|&ast::Item {id: _, ident: _, ref vis, attrs: _, ref kind, .. }| {
+                    if let ast::ItemKind::Impl(box ast::ImplKind {unsafety: _, polarity: _, defaultness: _, constness: _, generics: _, of_trait: _, self_ty: _, items}) = kind {
+                        items.iter().filter_map(|item| {
+                            if let ast::AssocItemKind::Fn(box ast::FnKind (_, ast::FnSig{ref decl, ..}, ..)) = (*item).kind {
+                                let name = (*item).ident.name;
+                                if let &ast::FnDecl {ref inputs, output: ast::FnRetTy::Ty(ref ty), ..} = decl.deref() {
+                                    Some((vis.kind.clone(), name, inputs.iter().map(|ref arg| {
+                                        state::State::new().param_to_string(&arg)
+                                    }).collect::<Vec<String>>(), Some(ty_to_string(&ty))))
+                                } else if let &ast::FnDecl {ref inputs, output: ast::FnRetTy::Default(_), ..} = decl.deref() {
+                                    Some((vis.kind.clone(), name, inputs.iter().map(|ref arg| {
+                                        state::State::new().param_to_string(&arg)
+                                    }).collect::<Vec<String>>(), None))
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)>>()
+                    } else {
+                        vec![]
+                    }
+                })
+                .collect::<Vec<(ast::VisibilityKind, symbol::Symbol, Vec<String>, Option<String>)>>(),
+        path))
     }
 }
 
-impl <'a>fmt::Display for Method<'a> {
+
+impl fmt::Display for Method {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{item}",
             item = escape_html(self.func.iter()
                                         .map(|&(ref vis, ref name, ref inputs, ref ty)|
                                                match (vis, ty) {
-                                                   (&&ast::Visibility::Public, &Some(ref ty)) => {
+                                                   (&ast::VisibilityKind::Public, &Some(ref ty)) => {
                                                        format!("+{}{}({}) -> {}", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "), ty)
                                                    },
-                                                   (&&ast::Visibility::Public, &None) => {
+                                                   (&ast::VisibilityKind::Public, &None) => {
                                                        format!("+{}{}({})", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "))
                                                    },
                                                    (_, &Some(ref ty)) => {

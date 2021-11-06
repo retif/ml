@@ -12,11 +12,11 @@ use std::borrow::Cow;
 use std::ops::BitOr;
 use std::rc::Rc;
 
-use ::syntex_syntax::{ptr, ast};
-use ::dot::{Nodes, Edges, Arrow, Style, GraphWalk, Labeller, LabelText, Id};
-use ::itertools::Itertools;
+use rustc_ast::{ptr, ast};
+use crate::dot::{Nodes, Edges, Arrow, Style, GraphWalk, Labeller, LabelText, Id};
+use crate::itertools::Itertools;
 
-use ::module::path::ModulePath;
+use crate::module::path::ModulePath;
 
 #[derive(Debug, Clone)]
 pub struct ListItem <'a> {

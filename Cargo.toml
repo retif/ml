@@ -12,6 +12,7 @@ repository = "https://github.com/adjivas/ml.git"
 homepage = "https://github.com/adjivas/ml"
 keywords = ["uml", "graph", "dot", "generator", "modeling-language"]
 categories = ["visualization"]
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "adjivas/ml", branch = "master" }
@@ -19,6 +20,7 @@ appveyor = { repository = "adjivas/ml", branch = "master", service = "github" }
 
 [[bin]]
 name = "ml"
+path = "bin/main.rs"
 doc  = false
 test = false
 
@@ -36,14 +38,14 @@ unstable      = [] # for building with unstable features on stable Rust
 debug         = [] # for building with debug messages
 travis        = ["lints", "nightly"] # for building with travis-cargo
 
-[dependencies.syntex_syntax]
-version = "0.59"
-
-[dependencies.syntex_errors]
-version = "0.59"
-
-[dependencies.rustc-serialize]
-version = "0.3"
+[dependencies]
+# rustc_ast = {package = "rustc-ap-rustc_ast", version = "727.0.0"}
+# rustc_ast_pretty = {package = "rustc-ap-rustc_ast_pretty", version = "727.0.0"}
+# rustc_parse = {package = "rustc-ap-rustc_parse", version = "727.0.0"}
+# rustc_session = {package = "rustc-ap-rustc_session", version = "727.0.0"}
+# rustc_errors = {package = "rustc-ap-rustc_errors", version = "727.0.0"}
+# rustc_span = {package ="rustc-ap-rustc_span", version = "727.0.0"}
+# rustc_serialize = {package = "rustc-ap-rustc_serialize", version = "727.0.0"}
 
 [dependencies.itertools]
 version = "0.5"

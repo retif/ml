@@ -6,10 +6,10 @@ pub use self::state::ItemState;
 use std::{slice, iter};
 use std::rc::Rc;
 
-use ::syntex_syntax::{ptr, ast};
-use ::itertools::Itertools;
+use rustc_ast::{ptr, ast};
+use crate::itertools::Itertools;
 
-use ::module::path::ModulePath;
+use crate::module::path::ModulePath;
 
 /// The structure Item is a iterable collection of abstract elements.
 
@@ -38,8 +38,8 @@ impl <'a>Iterator for Item<'a> {
         self.it.next().and_then(|item| {
             let mut list: Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)> = vec!(item);
 
-            list.extend(self.it.peeking_take_while(|&&(ref item, _): (&&'a (ptr::P<ast::Item>, Rc<ModulePath>))| {
-                            if let ast::ItemKind::Impl(..) = item.node {
+            list.extend(self.it.peeking_take_while(|&&(ref item, _): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)| {
+                            if let ast::ItemKind::Impl(..) = item.kind {
                                 true
                             } else {    
                                 false

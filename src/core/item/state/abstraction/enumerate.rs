@@ -1,46 +1,72 @@
 use std::fmt;
 use std::rc::Rc;
 
-use ::syntex_syntax::print::pprust::ty_to_string;
-use ::syntex_syntax::{codemap, symbol, ast};
+use rustc_ast_pretty::pprust::ty_to_string;
+use rustc_ast::ast;
+use rustc_span::symbol;
 
-use ::module::path::ModulePath;
+use crate::module::path::ModulePath;
 
-use ::dot::escape_html;
+use crate::dot::escape_html;
 
 /// The structure `Enum` is a enumerate abstract element.
-
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Enum<'a> {
     pub path: Rc<ModulePath>,
     /// Visibility
-    pub vis: &'a ast::Visibility,
-    pub name: symbol::InternedString,
-    pub params: Vec<symbol::InternedString>,
-    pub variants: Vec<(symbol::InternedString, Vec<String>)>,
+    pub vis: &'a ast::VisibilityKind,
+    pub name: symbol::Symbol,
+    pub params: Vec<symbol::Symbol>,
+    pub variants: Vec<(symbol::Symbol, Vec<String>)>,
 }
 
-impl <'a>From<((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)> for Enum<'a> {
-    fn from(((item, ty_params, variants), path): ((&'a ast::Item, &'a Vec<ast::TyParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)) -> Enum<'a> {
+impl <'a>PartialEq for Enum<'a> {
+    fn eq(&self, b: &Self) -> bool {
+
+        let a = self;
+
+        use ast::VisibilityKind::*;
+
+        let bvis = match (a.vis, b.vis) {
+            (Public, Public) => true,
+            (Crate(_), Crate(_)) => true,
+            (Restricted{..}, Restricted{..}) => true,
+            (Inherited, Inherited) => true,
+            _ => false,
+        };
+
+        a.path == b.path &&
+        a.name == b.name &&
+        a.params == b.params &&
+        a.variants == b.variants &&
+        bvis
+    }
+}
+
+impl <'a>Eq for Enum<'a> {}
+
+
+impl <'a>From<((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)> for Enum<'a> {
+    fn from(((item, params, variants), path): ((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>), Rc<ModulePath>)) -> Enum<'a> {
         Enum {
             path: path,
-            vis: &item.vis,
-            name: item.ident.name.as_str(),
-            params: ty_params.iter()
-                             .map(|&ast::TyParam {attrs: _, ident: ast::Ident {name, ..}, ..}| name.as_str())
-                             .collect::<Vec<symbol::InternedString>>(),
+            vis: &item.vis.kind,
+            name: item.ident.name,
+            params: params.iter()
+                             .map(|&ast::GenericParam {attrs: _, ident: symbol::Ident {name, ..}, ..}| name)
+                             .collect::<Vec<symbol::Symbol>>(),
             variants: variants.iter()
-                              .map(|&codemap::Spanned {node: ast::Variant_ {name: ast::Ident {name, ..}, attrs: _, ref data, ..}, ..}| {
+                              .map(|&ast::Variant {ident: symbol::Ident {name, ..}, attrs: _, ref data, ..}| {
                                    if let &ast::VariantData::Tuple(ref struct_field, _) = data {
-                                       (name.as_str(),
+                                       (name,
                                         struct_field.iter()
-                                                    .filter_map(|&ast::StructField { span: _, ident: _, vis: _, id: _, ref ty, .. }| Some(ty_to_string(&ty)))
+                                                    .filter_map(|&ast::FieldDef { span: _, ident: _, vis: _, id: _, ref ty, .. }| Some(ty_to_string(&ty)))
                                                     .collect::<Vec<String>>())
                                    } else {
-                                       (name.as_str(), Vec::new())
+                                       (name, Vec::new())
                                    }
                               })
-                              .collect::<Vec<(symbol::InternedString, Vec<String>)>>(),
+                              .collect::<Vec<(symbol::Symbol, Vec<String>)>>(),
         }
     }
 }
@@ -53,7 +79,7 @@ impl <'a>fmt::Display for Enum<'a> {
             write!(f, "&lt;&lt;&lt;Enumeration&gt;&gt;&gt;\n{name}|{variants}",
                 name = self.name,
                 variants = escape_html(self.variants.iter()
-                                           .map(|&(ref name, ref struct_field): &(symbol::InternedString, Vec<String>)|
+                                           .map(|&(ref name, ref struct_field): &(symbol::Symbol, Vec<String>)|
                                                 if struct_field.is_empty() {
                                                     format!("{}", name)
                                                 } else {
