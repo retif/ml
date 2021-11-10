@@ -2,7 +2,76 @@
 
 [![Crate][crate-badge]][crate] [![travis-badge][]][travis] [![appveyor-badge]][appveyor] [![dependencyci-badge]][dependencyci]
 
-A library to generating UML language from Rust's project into graphiz/dot file.
+A library (and cli tool) to generating UML language from Rust's project into graphiz/dot file.
+
+## QuickStart
+
+### Obtain mml
+
+```
+$ git clone https://github.com/dan-da/ml.git
+$ cd ml
+```
+
+### Install Dependencies
+
+The `dot` binary from graphviz package must exist in your path.
+```
+$ apt install graphviz
+```
+(or do the equivalent for your OS)
+
+
+Nightly rustc is required.  Run this from **within** ml crate.
+```
+$ rustup install rustc llvm-tools-preview
+```
+
+### Build and run mml
+```
+$ cargo run --example ml
+```
+
+important: ml looks for files beneath ./src, so you should always cd to crate root before running it.
+
+### View generated diagram
+```
+$ firefox target/doc/ml.svg
+```
+
+`inkscape` also works well as an svg viewer.
+
+
+## Usage
+
+```
+$ ./target/debug/examples/ml --help Usage: ml [OPTIONS]
+
+Parses rust source code and generates UML diagram
+
+Arguments:
+--include_fields [bool] include fields/variants in diagram
+--include_implems [bool] include trait implementation methods in diagram
+--include_methods [bool] include methods in diagram
+--struct_header_bgcolor [str] header background color for structs
+--struct_fields_bgcolor [str] fields background color for structs
+--struct_method_bgcolor [str] methods background color for structs
+--struct_implem_bgcolor [str] implems background color for structs
+--enum_header_bgcolor [str] header background color for enums
+--enum_fields_bgcolor [str] fields background color for enums
+--enum_method_bgcolor [str] methods background color for enums
+--enum_implem_bgcolor [str] implems background color for enums
+--trait_header_bgcolor [str] header background color for traits
+--trait_method_bgcolor [str] methods background color for traits
+--font [str] Font name
+```
+
+Output is always under target/doc/mml/
+
+You can add `ml` binary to your path and then you should be able to run
+it for any rust crate.
+
+--------------------------- Old, possibly obsolete -----------------
 
 ## Usage
 This repo is provided as a [Cargo package](http://doc.crates.io/manifest.html) and a [build script](http://doc.crates.io/build-script.html).
