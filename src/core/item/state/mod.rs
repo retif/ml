@@ -202,7 +202,7 @@ impl <'a>fmt::Display for ItemState<'a> {
                 Abstract::Struct{..} => Config::global().struct_method_bgcolor.clone(),
                 Abstract::Trait{..} => Config::global().trait_method_bgcolor.clone(),
                 Abstract::Enum{..} => Config::global().enum_method_bgcolor.clone(),
-                Abstract::None => "".to_string(),
+                Abstract::None => "white".to_string(),
             };
 
             write!(f, "<tr><td align=\"left\" bgcolor=\"{bgcolor}\">{method}<br align=\"left\"/></td></tr>",
@@ -218,9 +218,9 @@ impl <'a>fmt::Display for ItemState<'a> {
 
             let bgcolor = match self.node {
                 Abstract::Struct{..} => Config::global().struct_implem_bgcolor.clone(),
-                Abstract::Trait{..} => "".to_string(),
+                Abstract::Trait{..} => Config::global().trait_implem_bgcolor.clone(),
                 Abstract::Enum{..} => Config::global().enum_implem_bgcolor.clone(),
-                Abstract::None => "".to_string(),
+                Abstract::None => "white".to_string(),
             };
 
             write!(f, "<tr><td align=\"left\" bgcolor=\"{bgcolor}\">{implem}<br align=\"left\"/></td></tr>",

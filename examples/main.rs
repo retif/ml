@@ -20,6 +20,7 @@ fn main() {
         --enum_implem_bgcolor [str]: { help: "implems background color for enums" },
         --trait_header_bgcolor [str]: { help: "header background color for traits" },
         --trait_method_bgcolor [str]: { help: "methods background color for traits" },
+        --trait_implem_bgcolor [str]: { help: "implems background color for traits" },
         --font [str]: { help: "Font name" },
     )
     .launch();   
@@ -80,6 +81,11 @@ fn command_to_config(ctx: &argi::Command) -> Config {
 
     match data!(ctx => --trait_method_bgcolor) {
         Some(v) => config.trait_method_bgcolor = v,
+        None => {},
+    }
+
+    match data!(ctx => --trait_implem_bgcolor) {
+        Some(v) => config.trait_implem_bgcolor = v,
         None => {},
     }
 

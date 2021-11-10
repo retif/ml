@@ -83,6 +83,7 @@ pub struct Config {
     pub enum_implem_bgcolor: String,
     pub trait_header_bgcolor: String,
     pub trait_method_bgcolor: String,
+    pub trait_implem_bgcolor: String,
     pub font_name: String,
 }
 static INSTANCE: OnceCell<Config> = OnceCell::new();
@@ -113,6 +114,7 @@ impl Default for Config {
             enum_implem_bgcolor: "white".to_string(),
             trait_header_bgcolor: "lightgreen".to_string(),
             trait_method_bgcolor: "white".to_string(),
+            trait_implem_bgcolor: "white".to_string(),
             font_name: "Arial".to_string(),
         }
     }
@@ -190,7 +192,7 @@ pub fn src2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
                                     .filter_map(|entry: walkdir::DirEntry| {
                                         let path: &Path = entry.path();
 
-                                        if path.extension().unwrap().eq(OsStr::new("rs")) {
+                                        if path.extension() == Some(OsStr::new("rs")) {
                                             file2crate(path).ok().and_then(|parse| Some(Module::from((parse.items, path.to_path_buf()))))
                                         } else {
                                             None
