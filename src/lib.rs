@@ -103,7 +103,7 @@ impl Default for Config {
         Config {
             include_methods: true,
             include_fields: true,
-            include_implems: true,
+            include_implems: false,  // has dups with methods. 
             struct_header_bgcolor: "lightblue".to_string(),
             struct_fields_bgcolor: "white".to_string(),
             struct_method_bgcolor: "white".to_string(),
