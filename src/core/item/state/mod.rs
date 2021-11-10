@@ -21,13 +21,14 @@ use rustc_span::symbol::Symbol;
 use rustc_ast::{ptr, ast};
 
 use crate::module::path::ModulePath;
+use crate::Config;
 
 /// The structure `ItemState` describes an abstract element with a collections of methodes
 /// and implementations.
 #[derive(Default, Debug, Clone, Eq, PartialEq)]
 pub struct ItemState<'a> {
     /// Data Type.
-    node: Abstract<'a>,
+    pub(crate) node: Abstract<'a>,
     /// Implementation of Method.
     method: Vec<Method>,
     /// Implementation of Trait.
@@ -137,7 +138,7 @@ impl <'a>From<(Abstract<'a>, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>)> for 
                 )
                 .collect::<Vec<Method>>(),
             implem: properties.iter()
-                .filter_map(|&&(ref item, _): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)|
+                .filter_map(|&&(ref item, _): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)| {
                     if let ast::ItemKind::Impl(b) = &item.kind {
                         let ast::ImplKind { of_trait, .. } = &**b;
                         if let Some(ast::TraitRef {path: ast::Path {span: _, ref segments, ..}, ..}) = of_trait {
@@ -148,7 +149,7 @@ impl <'a>From<(Abstract<'a>, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>)> for 
                     } else {
                         None
                     }
-                )
+                })
                 .collect::<Vec<Implem>>()
         }
     }
@@ -185,28 +186,50 @@ impl <'a>From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
 
 impl <'a>fmt::Display for ItemState<'a> {
 
-    #[cfg(feature = "implem")]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{{node}|{method}|{implem}}}",
-            node = self.node,
-            method = self.method.iter()
-                                .map(|ref methods| format!("{}", methods))
-                                .collect::<Vec<String>>().join("\n").as_str(),
-            implem = self.implem.iter()
-                                .map(|ref implem| format!("{}", implem))
-                                .collect::<Vec<String>>().join("\n").as_str())
-    }
 
-    #[cfg(not(feature = "implem"))]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.method.is_empty() {
-            write!(f, "{{{node}}}", node = self.node)
-        } else {
-            write!(f, "{{{node}|{method}}}",
+        write!(f, 
+                "<font face=\"{font}\"><table border=\"1\" cellspacing=\"0\" cellpadding=\"10\">{node}",
+                font = Config::global().font_name,
                 node = self.node,
+        )?;
+
+        let include_method = !self.method.is_empty() &&Config::global().include_methods;
+
+        if include_method {
+
+            let bgcolor = match self.node {
+                Abstract::Struct{..} => Config::global().struct_method_bgcolor.clone(),
+                Abstract::Trait{..} => Config::global().trait_method_bgcolor.clone(),
+                Abstract::Enum{..} => Config::global().enum_method_bgcolor.clone(),
+                Abstract::None => "".to_string(),
+            };
+
+            write!(f, "<tr><td align=\"left\" bgcolor=\"{bgcolor}\">{method}<br align=\"left\"/></td></tr>",
+                bgcolor = bgcolor,
                 method = self.method.iter()
                                     .map(|ref methods| format!("{}", methods))
-                                    .collect::<Vec<String>>().join("\n").as_str())
+                                    .collect::<Vec<String>>().join("<br align=\"left\"/>\n").as_str())?;
         }
+
+        let include_implem = !self.implem.is_empty() && Config::global().include_implems;
+
+        if include_implem { // Config::global().include_implem {
+
+            let bgcolor = match self.node {
+                Abstract::Struct{..} => Config::global().struct_implem_bgcolor.clone(),
+                Abstract::Trait{..} => "".to_string(),
+                Abstract::Enum{..} => Config::global().enum_implem_bgcolor.clone(),
+                Abstract::None => "".to_string(),
+            };
+
+            write!(f, "<tr><td align=\"left\" bgcolor=\"{bgcolor}\">{implem}<br align=\"left\"/></td></tr>",
+                bgcolor = bgcolor,
+                implem = self.implem.iter()
+                                    .map(|ref implem| format!("{}", implem))
+                                    .collect::<Vec<String>>().join("<br align=\"left\"/>\n").as_str())?;
+        }
+
+        write!(f, "</table></font>")
     }
 }

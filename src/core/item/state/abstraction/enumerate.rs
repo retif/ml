@@ -8,6 +8,7 @@ use rustc_span::symbol;
 use crate::module::path::ModulePath;
 
 use crate::dot::escape_html;
+use crate::Config;
 
 /// The structure `Enum` is a enumerate abstract element.
 #[derive(Debug, Clone)]
@@ -73,25 +74,31 @@ impl <'a>From<((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>
 
 impl <'a>fmt::Display for Enum<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.variants.is_empty() {
-            write!(f, "&lt;&lt;&lt;Enumeration&gt;&gt;&gt;\n{name}", name = self.name)
+
+        let include_variants = !self.variants.is_empty() && Config::global().include_fields;
+
+        if !include_variants {
+            write!(f, 
+                    "<tr><td bgcolor=\"{bgcolor}\"><b>{name}</b></td></tr>",
+                    bgcolor = Config::global().enum_header_bgcolor,
+                    name = self.name)
         } else {
-            write!(f, "&lt;&lt;&lt;Enumeration&gt;&gt;&gt;\n{name}|{variants}",
+            write!(f, "<tr><td bgcolor=\"{header_bgcolor}\"><b>{name}</b></td></tr><tr><td align=\"left\" bgcolor=\"{fields_bgcolor}\">{variants}<br align=\"left\"/></td></tr>",
+                header_bgcolor = Config::global().enum_header_bgcolor,
+                fields_bgcolor = Config::global().enum_fields_bgcolor,
                 name = self.name,
-                variants = escape_html(self.variants.iter()
+                variants = self.variants.iter()
                                            .map(|&(ref name, ref struct_field): &(symbol::Symbol, Vec<String>)|
                                                 if struct_field.is_empty() {
-                                                    format!("{}", name)
+                                                    escape_html(&format!("{}", name))
                                                 } else {
-                                                    format!("{}({})", name, struct_field.join(", "))
+                                                    escape_html(&format!("{}({})", name, struct_field.join(", ")))
                                                 }
                                            )
                                            .collect::<Vec<String>>()
-                                           .join("\n")
-                                           .as_str()),
+                                           .join("<br align=\"left\"/>\n")
+                                           .as_str(),
             )
         }
     }
 }
-
-

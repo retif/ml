@@ -39,7 +39,6 @@ extern crate rustc_parse;
 extern crate rustc_hash;
 extern crate rustc_interface;
 
-
 pub mod prelude;
 pub mod module;
 pub mod core;
@@ -62,20 +61,60 @@ use walkdir::WalkDir;
 use crate::core::ListItem;
 use module::Module;
 use module::path::ModulePath;
+use once_cell::sync::OnceCell;
 
 /// The default name of *graph/dot* file.
 pub const DEFAULT_NAME_DOT: &'static str = "ml.dot";
 /// The default name of *image/svg* file.
 pub const DEFAULT_NAME_PNG: &'static str = "ml.svg";
 
-#[derive(Clone)]
-struct CrateSend(pub ast::Crate);
+#[derive(Debug)]
+pub struct Config {
+    pub include_methods: bool,
+    pub include_fields: bool,
+    pub include_implems: bool,
+    pub struct_header_bgcolor: String,
+    pub struct_fields_bgcolor: String,
+    pub struct_method_bgcolor: String,
+    pub struct_implem_bgcolor: String,
+    pub enum_header_bgcolor: String,
+    pub enum_fields_bgcolor: String,
+    pub enum_method_bgcolor: String,
+    pub enum_implem_bgcolor: String,
+    pub trait_header_bgcolor: String,
+    pub trait_method_bgcolor: String,
+    pub font_name: String,
+}
+static INSTANCE: OnceCell<Config> = OnceCell::new();
 
-unsafe impl Send for CrateSend {}
+impl Config {
+    pub fn set_global(config: Self) {
+        INSTANCE.set(config).unwrap();
+    }
 
-impl AsRef<CrateSend> for CrateSend {
-    fn as_ref(&self) -> &CrateSend {
-        &self
+    pub(crate) fn global() -> &'static Self {
+        INSTANCE.get().expect("config is not initialized")
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            include_methods: true,
+            include_fields: true,
+            include_implems: true,
+            struct_header_bgcolor: "lightblue".to_string(),
+            struct_fields_bgcolor: "white".to_string(),
+            struct_method_bgcolor: "white".to_string(),
+            struct_implem_bgcolor: "white".to_string(),
+            enum_header_bgcolor: "yellow".to_string(),
+            enum_fields_bgcolor: "white".to_string(),
+            enum_method_bgcolor: "white".to_string(),
+            enum_implem_bgcolor: "white".to_string(),
+            trait_header_bgcolor: "lightgreen".to_string(),
+            trait_method_bgcolor: "white".to_string(),
+            font_name: "Arial".to_string(),
+        }
     }
 }
 

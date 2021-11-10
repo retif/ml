@@ -110,26 +110,26 @@ impl From<(Vec<ast::Item>, Rc<ModulePath>)> for Method {
 impl fmt::Display for Method {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{item}",
-            item = escape_html(self.func.iter()
+            item = self.func.iter()
                                         .map(|&(ref vis, ref name, ref inputs, ref ty)|
                                                match (vis, ty) {
                                                    (&ast::VisibilityKind::Public, &Some(ref ty)) => {
-                                                       format!("+{}{}({}) -> {}", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "), ty)
+                                                       escape_html(&format!("+{}{}({}) -> {}", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "), ty))
                                                    },
                                                    (&ast::VisibilityKind::Public, &None) => {
-                                                       format!("+{}{}({})", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "))
+                                                       escape_html(&format!("+{}{}({})", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", ")))
                                                    },
                                                    (_, &Some(ref ty)) => {
-                                                       format!("-{}{}({}) -> {}", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "), ty)
+                                                       escape_html(&format!("-{}{}({}) -> {}", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "), ty))
                                                    },
                                                    (_, &None) => {
-                                                       format!("-{}{}({})", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", "))
+                                                       escape_html(&format!("-{}{}({})", DEFAULT_FUNC, name, inputs.iter().map(|arg| arg.to_string()).collect::<Vec<String>>().join(", ")))
                                                    },
                                                }
                                            )
                                            .collect::<Vec<String>>()
-                                           .join("\n")
-                                           .as_str())
+                                           .join("<br align=\"left\"/>\n")
+                                           .as_str()
         )
     }
 }

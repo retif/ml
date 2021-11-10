@@ -7,6 +7,7 @@ use rustc_ast::{ast, ptr};
 use rustc_span::symbol;
 
 use crate::module::path::ModulePath;
+use crate::Config;
 
 use crate::dot::escape_html;
 
@@ -75,18 +76,27 @@ impl <'a>From<((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ptr::P<ast::I
 
 impl <'a>fmt::Display for Trait<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "&lt;&lt;&lt;Trait&gt;&gt;&gt;\n{name}|{items}",
-           name = self.name,
-           items = escape_html(self.items.iter()
-                                   .map(|&(ref name, ref ty, ref ret): &(symbol::Symbol, Vec<String>, String)|
-                                        format!("{name}({ty}) -> {ret}",
-                                            name = name,
-                                            ty = ty.join(", "),
-                                            ret = ret
-                                        ))
-                                   .collect::<Vec<String>>()
-                                   .join("\n")
-                                   .as_str())
-        )
+        if Config::global().include_methods {
+            write!(f, "<tr><td bgcolor=\"{header_bgcolor}\"><b>{name}</b></td></tr><tr><td align=\"left\" bgcolor=\"{method_bgcolor}\">{items}<br align=\"left\"/></td></tr>",
+            header_bgcolor = Config::global().trait_header_bgcolor,
+            method_bgcolor = Config::global().trait_method_bgcolor,
+            name = self.name,
+            items = self.items.iter()
+                                    .map(|&(ref name, ref ty, ref ret): &(symbol::Symbol, Vec<String>, String)|
+                                            escape_html(&format!("{name}({ty}) -> {ret}",
+                                                name = name,
+                                                ty = ty.join(", "),
+                                                ret = ret
+                                            )))
+                                    .collect::<Vec<String>>()
+                                    .join("<br align=\"left\"/>\n")
+                                    .as_str()
+            )
+        } else {
+            write!(f, "<tr><td bgcolor=\"{bgcolor}\"><b>{name}</b></td></tr>",
+                bgcolor = Config::global().trait_header_bgcolor,
+                name = self.name,
+            )
+        }
     }
 }

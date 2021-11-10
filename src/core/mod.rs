@@ -58,11 +58,15 @@ impl<'a> Labeller<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
     }
 
     fn node_shape(&'a self, _node: &ItemState<'a>) -> Option<LabelText<'a>> {
-        Some(LabelText::LabelStr(Cow::from(format!("record"))))
+        Some(LabelText::LabelStr(Cow::from(format!("none"))))
     }
 
     fn node_label(&'a self, state: &ItemState<'a>) -> LabelText<'a> {
-        LabelText::LabelStr(format!("{}", state).into())
+        LabelText::HtmlStr(format!("{}", state).into())
+    }
+
+    fn edge_color(&'a self, _state: &Segment<'a>) -> Option<LabelText<'a>> {
+        Some(LabelText::LabelStr(format!("{}", "black").into()))
     }
 
     fn edge_end_arrow(&'a self, ref seg: &Segment<'a>) -> Arrow {

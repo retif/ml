@@ -8,6 +8,7 @@ use rustc_span::symbol;
 use crate::module::path::ModulePath;
 
 use crate::dot::escape_html;
+use crate::Config;
 
 /// The structure `Struct` is a structure abstract element.
 
@@ -62,21 +63,29 @@ impl <'a>From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Str
 
 impl <'a>fmt::Display for Struct<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.fields.is_empty() {
-            write!(f, "&lt;&lt;&lt;Structure&gt;&gt;&gt;\n{name}", name = self.name)
+        let include_fields = !self.fields.is_empty() && Config::global().include_fields;
+
+        if !include_fields {
+            write!(f,
+                    "<tr><td bgcolor=\"{bgcolor}\"><b>{name}</b></td></tr>",
+                    bgcolor = Config::global().struct_header_bgcolor,
+                    name = self.name)
         } else {
-            write!(f, "&lt;&lt;&lt;Structure&gt;&gt;&gt;\n{name}|{fields}",
+            write!(f, "<tr><td bgcolor=\"{header_bgcolor}\"><b>{name}</b></td></tr><tr><td align=\"left\" bgcolor=\"{fields_bgcolor}\">{fields}<br align=\"left\"/></td></tr>",
+                header_bgcolor = Config::global().struct_header_bgcolor,
+                fields_bgcolor = Config::global().struct_fields_bgcolor,
                 name = self.name,
-                fields = escape_html(self.fields.iter()
+                fields = self.fields.iter()
                                                 .map(|&(ref vis, ref name, ref ty): &(&ast::VisibilityKind, symbol::Symbol, String)|
+                                                    escape_html(
                                                     match vis {
                                                         ast::VisibilityKind::Public => format!("+ {name}: {ty}", name = name, ty = ty),
                                                         _ => format!("- {name}: {ty}", name = name, ty = ty)
-                                                    }
+                                                    }.as_str())
                                                 )
                                                 .collect::<Vec<String>>()
-                                                .join("\n")
-                                                .as_str()),
+                                                .join("<br align=\"left\"/>\n")
+                                                .as_str(),
             )
         }
     }
