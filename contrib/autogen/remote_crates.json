@@ -12,6 +12,7 @@
     "crdt_tree": {"git": "https://github.com/maidsafe/crdt_tree"},
     "lru_time_cache": {"git": "https://github.com/maidsafe/lru_time_cache"},
     "qjsonrpc": {"git": "https://github.com/maidsafe/qjsonrpc"},
+    "qp2p": {"git": "https://github.com/maidsafe/qp2p"},
     "resource_proof": {"git": "https://github.com/maidsafe/resource_proof"},
     "rust-crdts": {"git": "https://github.com/rust-crdt/rust-crdt"},
     "secured_linked_list": {"git": "https://github.com/maidsafe/secured_linked_list"},
