@@ -37,6 +37,35 @@ impl <'a> Abstract <'a> {
             &Abstract::None => None,
         }
     }
+
+    pub fn as_type(&self) -> Option<&str> {
+        match self {
+            &Abstract::Trait(_) => Some("trait"),
+            &Abstract::Struct(_) => Some("struct"),
+            &Abstract::Enum(_) => Some("enum"),
+            &Abstract::None => None,
+        }
+    }
+
+
+    pub fn span(&self) -> Option<&rustc_span::Span> {
+        match self {
+            &Abstract::Trait(ref t) => Some(&t.span),
+            &Abstract::Struct(ref s) => Some(&s.span),
+            &Abstract::Enum(ref e) => Some(&e.span),
+            &Abstract::None => None,
+        }
+    }
+
+    pub fn path(&self) -> Option<&Rc<ModulePath>> {
+        match self {
+            &Abstract::Trait(ref t) => Some(&t.path),
+            &Abstract::Struct(ref s) => Some(&s.path),
+            &Abstract::Enum(ref e) => Some(&e.path),
+            &Abstract::None => None,
+        }
+    }
+
 }
 
 impl<'a> IntoIterator for &'a Abstract<'a> {
@@ -45,14 +74,14 @@ impl<'a> IntoIterator for &'a Abstract<'a> {
 
     fn into_iter(self) -> Self::IntoIter {
         match self {
-            &Abstract::Struct(Struct {path: _, vis: _, name: _, fields: ref ty_field}) => {
-                ty_field.iter()
+            &Abstract::Struct(ref s) => {
+                s.fields.iter()
                         .map(|&(_, _, ref ty): &'a (&'a ast::VisibilityKind, symbol::Symbol, String)| ty)
                         .collect::<Vec<&'a String>>()
                         .into_iter()
             },
-            &Abstract::Enum(Enum {path: _, vis: _, name: _, params: _, variants: ref ty_multi_field}) => {
-                ty_multi_field.iter()
+            &Abstract::Enum(ref e) => {
+                e.variants.iter()
                               .map(|&(_, ref ty_field): &'a (symbol::Symbol, Vec<String>)| 
                                    ty_field.iter()
                                            .map(|ty: &'a String| ty)

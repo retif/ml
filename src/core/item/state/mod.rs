@@ -16,6 +16,7 @@ use super::relation::Relation;
 use std::ops::BitOr;
 use std::fmt;
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use rustc_span::symbol::Symbol;
 use rustc_ast::{ptr, ast};
@@ -188,8 +189,44 @@ impl <'a>fmt::Display for ItemState<'a> {
 
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
+        let href = match Config::global().src_url_mask.is_empty() {
+            true => "".to_string(),
+            false => {
+                match self.node.path() {
+                    Some(path) => {
+                        // scrolltext is for finding eg 'struct MyStruct' in the source file
+                        // using the scroll-to-text-fragment feature in chromium browsers.
+                        let scrolltext = match (self.node.as_type(), self.node.as_name()) {
+                            (Some(ty), Some(name)) => {
+                                let searchtext = format!("{} {}", ty, name);
+                                format!("#:~:text={}", urlencoding::encode(&searchtext))
+                            }
+                            _ => "".to_string(),
+                        };
+
+                        // figure out path to file from crate root.
+                        let fpath = (**path).path.iter().map(|p| p.clone().into_string().unwrap() ).collect::<Vec<String>>().join("/");
+                        let mut vars = HashMap::new();
+                        let file = format!("src/{}.rs", fpath);
+
+                        // insert file into src_url_mask
+                        vars.insert("file".to_string(), file.as_str());
+                        match strfmt::strfmt(&Config::global().src_url_mask, &vars) {
+                            Ok(url) => format!(" href=\"{}{}\"", url, scrolltext),
+                            Err(e) => {
+                                eprintln!("invalid src_url_mask. error: {}", e.to_string());
+                                "".to_string()
+                            },
+                        }
+                    },
+                    _ => "".to_string(),
+                }
+            }
+        };
+
         write!(f, 
-                "<font face=\"{font}\"><table border=\"1\" cellspacing=\"0\" cellpadding=\"10\">{node}",
+                "<font face=\"{font}\"><table border=\"1\" cellspacing=\"0\" cellpadding=\"10\"{href}>{node}",
+                href = href,
                 font = Config::global().font_name,
                 node = self.node,
         )?;

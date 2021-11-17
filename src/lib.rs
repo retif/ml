@@ -85,6 +85,7 @@ pub struct Config {
     pub trait_method_bgcolor: String,
     pub trait_implem_bgcolor: String,
     pub font_name: String,
+    pub src_url_mask: String,
 }
 static INSTANCE: OnceCell<Config> = OnceCell::new();
 
@@ -100,6 +101,12 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
+        let current_dir = match std::env::current_dir() {
+            Ok(pb) => pb.into_os_string().into_string().unwrap_or("".to_string()),
+            Err(_) => "".to_string(),
+        };
+        let src_url_mask = format!("file://{}/{}", current_dir, "{file}");
+
         Config {
             include_methods: true,
             include_fields: true,
@@ -116,6 +123,7 @@ impl Default for Config {
             trait_method_bgcolor: "white".to_string(),
             trait_implem_bgcolor: "white".to_string(),
             font_name: "Arial".to_string(),
+            src_url_mask,
         }
     }
 }

@@ -18,6 +18,7 @@ pub struct Module {
 impl From<(Vec<ptr::P<ast::Item>>, PathBuf)> for Module {
     fn from((list, mut path): (Vec<ptr::P<ast::Item>>, PathBuf)) -> Module {
         path.set_extension("");
+//println!("path: {:#?}", path);
         Module {
             list: list,
             path: ModulePath {

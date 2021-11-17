@@ -15,6 +15,8 @@ use crate::Config;
 #[derive(Debug, Clone)]
 pub struct Struct<'a> {
     pub path: Rc<ModulePath>,
+    pub span: rustc_span::Span,
+
     /// Visibility
     pub vis: &'a ast::VisibilityKind,
     pub name: symbol::Symbol,
@@ -51,6 +53,7 @@ impl <'a>From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Str
     fn from(((item, struct_field), path): ((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)) -> Struct<'a> {
         Struct {
             path: path,
+            span: item.span,
             vis: &item.vis.kind,
             name: item.ident.name,
             fields: struct_field.iter()

@@ -19,7 +19,14 @@ foreach($json as $crate => $meta) {
     $cmd = sprintf('git clone --depth=1 %s %s', escapeshellarg($url), escapeshellarg($crate));
     shell($cmd) && die("git clone failed\n");
     $cratedir = $crate . '/' . @$meta['path'];
-    $cratepaths[] = escapeshellarg(sprintf("%s/%s", $workdir, $cratedir));
+    $src_url_mask = "";
+    if(strstr($url, "github.com")) {
+        $src_url_mask = sprintf("%s/blob/master/{file}", $url);
+    }
+    $cratepaths[] = sprintf("%s[::]%s",
+        escapeshellarg(sprintf("%s/%s", $workdir, $cratedir)),
+        escapeshellarg($src_url_mask));
+
     echo "\n";
 }
 
@@ -27,6 +34,7 @@ $cmd = sprintf("%s/gen_diagrams.php %s %s",
                 escapeshellcmd(__DIR__),
                 escapeshellarg($diagrams_dir),
                 implode(' ', $cratepaths));
+
 shell($cmd) && die("");
 
 gen_html_index($diagrams_dir, $json);

@@ -2,10 +2,37 @@
 <?php
 
 $diagrams_dir = @$argv[1];
-$crates = @array_slice($argv, 2);
+$crates_args = @array_slice($argv, 2);
 
-if(!$diagrams_dir || !@count($crates)) {
-    die("missing arguments. Usage:\n  gen_diagrams <diagram-dir> <crate-path> [crate-path] ..\n");
+if(!$diagrams_dir || !@count($crates_args) || $diagrams_dir == '--help') {
+    die(<<<END
+missing arguments.
+
+Usage:
+    gen_diagrams <diagram-dir> <crate-arg> [crate-arg] ..
+
+crate-arg may take either form:
+    1. path
+    2. path[::]src-url-mask
+
+path is the absolute path to crate root.
+
+src-url-mask is a string template for url to the source code. eg:
+
+    file:///path/to/crate/{file}
+
+    -- or --
+
+    https:///github.com/username/project/blob/master/{file}
+
+END
+    );
+}
+
+$crates = [];
+foreach($crates_args as $ca) {
+    @list($crate, $src_url_mask) = @explode("[::]", $ca);
+    $crates[] = ['crate' => $crate, 'src_url_mask' => $src_url_mask];
 }
 
 $cmd = sprintf('rm -rf %1$s && mkdir -p %1$s', escapeshellarg($diagrams_dir));
@@ -32,10 +59,14 @@ if(!$bin_cmd) {
 }
 
 foreach($crates as $crate) {
-    gen_diagram($bin_cmd, $diagrams_dir, $crate);
+    $bin_cmd_iter = $bin_cmd;
+    if($src_url_mask) {
+        $bin_cmd_iter .= sprintf(" --src_url_mask %s", $crate['src_url_mask']);
+    }
+    gen_diagram($bin_cmd_iter, $diagrams_dir, $crate['crate']);
 }
 
-function gen_diagram($bin_cmd, $diagrams_dir, $crate_root) {
+function gen_diagram($bin_cmd, $diagrams_dir, $crate_root) {    
     $crate = basename($crate_root);
     echo "Processing $crate ($crate_root)\n";
     @chdir($crate_root) || die("failed to chdir to $crate_root");

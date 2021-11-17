@@ -14,6 +14,7 @@ use crate::dot::escape_html;
 #[derive(Debug, Clone)]
 pub struct Trait<'a> {
     pub path: Rc<ModulePath>,
+    pub span: rustc_span::Span,
     /// Visibility
     pub vis: &'a ast::VisibilityKind,
     pub name: symbol::Symbol,
@@ -38,6 +39,7 @@ impl <'a>PartialEq for Trait<'a> {
 
         a.path == b.path &&
         a.name == b.name &&
+        a.span == b.span &&
         a.params == b.params &&
         a.items == b.items &&
         bvis
@@ -52,6 +54,7 @@ impl <'a>From<((&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ptr::P<ast::I
             path: path,
             vis: &item.vis.kind,
             name: item.ident.name,
+            span: item.span,
             params: params.iter()
                              .map(|&ast::GenericParam {attrs: _, ident: symbol::Ident {name, ..}, ..}| name)
                              .collect::<Vec<symbol::Symbol>>(),

@@ -21,6 +21,7 @@ fn main() {
         --trait_header_bgcolor [str]: { help: "header background color for traits" },
         --trait_method_bgcolor [str]: { help: "methods background color for traits" },
         --trait_implem_bgcolor [str]: { help: "implems background color for traits" },
+        --src_url_mask [str]: { help: "url mask for src links, eg http://host/crate/{file}, or 'none'" },
         --font [str]: { help: "Font name" },
     )
     .launch();   
@@ -111,6 +112,12 @@ fn command_to_config(ctx: &argi::Command) -> Config {
 
     match data!(ctx => --font) {
         Some(v) => config.font_name = v,
+        None => {},
+    }
+
+    match data!(ctx => --src_url_mask) {
+        Some(v) if v == "none" => config.src_url_mask = "".to_string(),
+        Some(v) => config.src_url_mask = v,
         None => {},
     }
 
