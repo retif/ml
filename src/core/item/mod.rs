@@ -38,12 +38,23 @@ impl <'a>Iterator for Item<'a> {
         self.it.next().and_then(|item| {
             let mut list: Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)> = vec!(item);
 
-            list.extend(self.it.peeking_take_while(|&&(ref item, _): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)| {
-                            if let ast::ItemKind::Impl(..) = item.kind {
-                                true
-                            } else {    
-                                false
+            // Loop over all Items to find any Impl with a name that matches our name.
+            // This way we can handle cases like:
+            //      struct Foo{}
+            //      struct Bar{}
+            //      impl Foo {...}
+            //      impl Bar {...}
+            //      impl Foo {...}
+            let item_name = &item.0.ident.name;
+            list.extend(self.it.clone().filter(|&&(ref subitem, _): &&'a (ptr::P<ast::Item>, Rc<ModulePath>)| {
+                            if let &ast::ItemKind::Impl(box ast::ImplKind{self_ty: ref ty, ..}) = &subitem.kind {
+                                if let &ast::Ty {kind: ast::TyKind::Path(_, ast::Path{segments: ref seg, ..} ), .. } = &**ty {
+                                    if !seg.is_empty() && &seg[0].ident.name == item_name {
+                                        return true;
+                                    }
+                                }
                             }
+                            false
                         })
                         .collect::<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>>());
             Some(ItemState::from(list))
