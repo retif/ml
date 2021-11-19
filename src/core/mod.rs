@@ -105,7 +105,10 @@ impl<'a> GraphWalk<'a, ItemState<'a>, Segment<'a>> for ListItem<'a> {
                         .collect::<Vec<Vec<Segment<'a>>>>()
                         .concat()
                         .into_iter()
-                        .unique()
+                        .unique_by(|s| {
+                            (s.left.node.as_name().unwrap_or(&rustc_span::symbol::Symbol::intern("")).to_string(),
+                            s.right.node.as_name().unwrap_or(&rustc_span::symbol::Symbol::intern("")).to_string())
+                        })
                         .collect::<Vec<Segment<'a>>>())
     }
 

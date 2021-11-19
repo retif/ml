@@ -7,7 +7,6 @@ use std::{slice, iter};
 use std::rc::Rc;
 
 use rustc_ast::{ptr, ast};
-use crate::itertools::Itertools;
 
 use crate::module::path::ModulePath;
 
