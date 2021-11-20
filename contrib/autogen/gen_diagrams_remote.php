@@ -11,10 +11,11 @@ $cratefile = @$argv[1] ?: sprintf('%s/%s', __DIR__, 'remote_crates.json');
 ($text = @file_get_contents($cratefile)) || die("failed reading file $cratefile\n");
 ($json = @json_decode($text, true)) || die("failed parsing json in $cratefile\n");
 
-chdir($workdir) || die("failed chdir");
-
 $cratepaths = [];
+$crate_dates = [];
 foreach($json as $crate => $meta) {
+    chdir($workdir) || die("failed chdir");
+    $output = null;
     $url = @$meta['git'];
     $cmd = sprintf('git clone --depth=1 %s %s', escapeshellarg($url), escapeshellarg($crate));
     shell($cmd) && die("git clone failed\n");
@@ -23,6 +24,13 @@ foreach($json as $crate => $meta) {
     if(strstr($url, "github.com")) {
         $src_url_mask = sprintf("%s/blob/master/{file}", $url);
     }
+
+    // Get date of last commit
+    chdir("$cratedir") || die("failed chdir");
+    exec("git log -1 --format=\%cd", $output, $rc); if($rc) { die("git log failed"); }
+    $last_commit_date = date('Y-m-d', @strtotime(trim(implode("\n", $output))));
+    $crate_dates[$crate] = $last_commit_date;
+
     $cratepaths[] = sprintf("%s[::]%s",
         escapeshellarg(sprintf("%s/%s", $workdir, $cratedir)),
         escapeshellarg($src_url_mask));
@@ -37,7 +45,7 @@ $cmd = sprintf("%s/gen_diagrams.php %s %s",
 
 shell($cmd) && die("");
 
-gen_html_index($diagrams_dir, $json);
+gen_html_index($diagrams_dir, $json, $crate_dates);
 
 echo "\nFinished. Diagrams are in $diagrams_dir\n";
 
@@ -48,7 +56,7 @@ function shell($cmd) {
     return $rc;
 }
 
-function gen_html_index($diagrams_dir, $json) {
+function gen_html_index($diagrams_dir, $json, $crate_dates) {
   
     $buf = <<< END
 <html><head><style>
@@ -74,7 +82,7 @@ thead td {
 <body>
 <table class='diagrams'>
 <thead>
-<tr><td>Crate</td><td colspan="3">Diagrams</td><td colspan="3">References</td></tr>
+<tr><td>Crate</td><td colspan="3">Diagrams</td><td colspan="3">References</td><td>Last Commit</td></tr>
 </thead>
 END;
 
@@ -88,8 +96,9 @@ END;
         $compact = sprintf('%s-compact.svg', $crate);
         $full = sprintf('%s.svg', $crate);
         $class = $cnt % 2 == 0 ? 'even' : 'odd';
+        $last_commit_date = @$crate_dates[$crate];
 
-        $buf .= sprintf('<tr class="%s"><td>%s</td><td><a href="%s">bare</a></td><td><a href="%s">compact</a></td><td><a href="%s">full</a></td><td><a href="%s">repo</a></td><td><a href="%s">crates.io</a></td><td><a href="%s">docs.rs</a></td></tr>', $class, $crate, $bare, $compact, $full, $url, $crate_io_url, $docs_rs_url) . "\n";
+        $buf .= sprintf('<tr class="%s"><td>%s</td><td><a href="%s">bare</a></td><td><a href="%s">compact</a></td><td><a href="%s">full</a></td><td><a href="%s">repo</a></td><td><a href="%s">crates.io</a></td><td><a href="%s">docs.rs</a></td><td>%s</td></tr>', $class, $crate, $bare, $compact, $full, $url, $crate_io_url, $docs_rs_url, $last_commit_date) . "\n";
         $cnt ++;
     }
     $buf .= "</table></body></html>";
