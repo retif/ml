@@ -2,6 +2,8 @@
     "bls_dkg": {"git": "https://github.com/maidsafe/bls_dkg"},
     "bls_signature_aggregator": {"git": "https://github.com/maidsafe/bls_signature_aggregator"},
     "blsbs": {"git": "https://github.com/dan-da/blsbs"},
+    "blstrs": {"git": "https://github.com/filecoin-project/blstrs"},
+    "blst-ringct": {"git": "https://github.com/maidsafe/blst-ringct"},
     "blsttc": {"git": "https://github.com/maidsafe/blsttc"},
     "brb": {"git": "https://github.com/maidsafe/brb"},
     "brb_dt_at2": {"git": "https://github.com/maidsafe/brb_dt_at2"},
