@@ -172,6 +172,12 @@ impl <'a>From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
                     let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) = (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
                     Some(ItemState::from(kind))
                 },
+                // Structure (tuple)
+                &ast::ItemKind::Struct(ast::VariantData::Tuple(ref struct_field, _), ..) => {
+                    let kind: (&'a ast::Item, &'a Vec<ast::FieldDef>) = (item, struct_field);
+                    let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) = (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
+                    Some(ItemState::from(kind))
+                },
                 // Enumeration with variables.
                 &ast::ItemKind::Enum(ast::EnumDef {ref variants}, ast::Generics {ref params, ..}) => {
                     let kind: (&'a ast::Item, &'a Vec<ast::GenericParam>, &'a Vec<ast::Variant>) = (item, params, variants);

@@ -76,7 +76,7 @@ impl<'a> IntoIterator for &'a Abstract<'a> {
         match self {
             &Abstract::Struct(ref s) => {
                 s.fields.iter()
-                        .map(|&(_, _, ref ty): &'a (&'a ast::VisibilityKind, symbol::Symbol, String)| ty)
+                        .map(|&(_, _, ref ty): &'a (&'a ast::VisibilityKind, Option<symbol::Symbol>, String)| ty)
                         .collect::<Vec<&'a String>>()
                         .into_iter()
             },

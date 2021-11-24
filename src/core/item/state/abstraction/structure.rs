@@ -20,7 +20,7 @@ pub struct Struct<'a> {
     /// Visibility
     pub vis: &'a ast::VisibilityKind,
     pub name: symbol::Symbol,
-    pub fields: Vec<(&'a ast::VisibilityKind, symbol::Symbol, String)>,
+    pub fields: Vec<(&'a ast::VisibilityKind, Option<symbol::Symbol>, String)>,
 }
 
 impl <'a>PartialEq for Struct<'a> {
@@ -58,8 +58,11 @@ impl <'a>From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Str
             name: item.ident.name,
             fields: struct_field.iter()
                                 .filter_map(|&ast::FieldDef { span: _, ident, ref vis, id: _, ref ty, .. }|
-                                           ident.and_then(|symbol::Ident {name, ..}| Some((&vis.kind, name, ty_to_string(&ty)))))
-                                .collect::<Vec<(&ast::VisibilityKind, symbol::Symbol, String)>>()
+                                            match ident {
+                                                Some(i) => Some((&vis.kind, Some(i.name), ty_to_string(&ty))),
+                                                None => Some((&vis.kind, None, ty_to_string(&ty))),
+                                            })
+                                .collect::<Vec<(&ast::VisibilityKind, Option<symbol::Symbol>, String)>>()
         }
     }
 }
@@ -79,13 +82,17 @@ impl <'a>fmt::Display for Struct<'a> {
                 fields_bgcolor = Config::global().struct_fields_bgcolor,
                 name = self.name,
                 fields = self.fields.iter()
-                                                .map(|&(ref vis, ref name, ref ty): &(&ast::VisibilityKind, symbol::Symbol, String)|
+                                                .map(|&(ref vis, ref name, ref ty): &(&ast::VisibilityKind, Option<symbol::Symbol>, String)|{
+                                                    let name_part = match name {
+                                                        Some(n) => format!("{}: ", n),
+                                                        None => "".to_string(),
+                                                    };                                                    
                                                     escape_html(
                                                     match vis {
-                                                        ast::VisibilityKind::Public => format!("+ {name}: {ty}", name = name, ty = ty),
-                                                        _ => format!("- {name}: {ty}", name = name, ty = ty)
+                                                        ast::VisibilityKind::Public => format!("+ {name}{ty}", name = name_part, ty = ty),
+                                                        _ => format!("- {name}{ty}", name = name_part, ty = ty)
                                                     }.as_str())
-                                                )
+                                                })
                                                 .collect::<Vec<String>>()
                                                 .join("<br align=\"left\"/>\n")
                                                 .as_str(),
