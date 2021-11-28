@@ -29,5 +29,6 @@
     "sn_ffi_utils": {"git": "https://github.com/maidsafe/sn_ffi_utils"},
     "sn_fs": {"git": "https://github.com/maidsafe/sn_fs"},
     "sn_launch_tool": {"git": "https://github.com/maidsafe/sn_launch_tool"},
+    "sn_payment": {"git": "https://github.com/dan-da/sn_payment"},
     "xor_name": {"git": "https://github.com/maidsafe/xor_name"}
 }
