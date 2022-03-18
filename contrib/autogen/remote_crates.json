@@ -3,6 +3,7 @@
     "bls_signature_aggregator": {"git": "https://github.com/maidsafe/bls_signature_aggregator"},
     "blsbs": {"git": "https://github.com/dan-da/blsbs"},
     "blstrs": {"git": "https://github.com/filecoin-project/blstrs"},
+    "blst-bulletproofs": {"git": "https://github.com/davidrusu/blst-bulletproofs"},
     "blst-ringct": {"git": "https://github.com/maidsafe/blst-ringct"},
     "blsttc": {"git": "https://github.com/maidsafe/blsttc"},
     "brb": {"git": "https://github.com/maidsafe/brb"},
