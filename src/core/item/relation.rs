@@ -1,6 +1,6 @@
 use super::ItemState;
 
-use ::dot::{Fill, ArrowShape, Side};
+use dot::{ArrowShape, Fill, Side};
 
 /// The enumeration `Relation` is the relationship specification from [UML 2.5](http://www.omg.org/spec/UML/2.5) without generalization.
 #[derive(Debug, Copy, Clone)]
@@ -14,7 +14,6 @@ pub enum Relation {
 }
 
 impl Relation {
-
     /// The method `as_style` returns a stylized arrow (See *Table B.2 UML Edges* from [UML 2.5](http://www.omg.org/spec/UML/2.5).
     pub fn as_style(&self) -> ArrowShape {
         match self {
@@ -28,7 +27,7 @@ impl Relation {
     }
 }
 
-impl <'a>From<(&'a ItemState<'a>, &'a ItemState<'a>)> for Relation {
+impl<'a> From<(&'a ItemState<'a>, &'a ItemState<'a>)> for Relation {
     fn from((left, right): (&'a ItemState<'a>, &'a ItemState<'a>)) -> Relation {
         if left.is_composition(right) {
             Relation::Composition

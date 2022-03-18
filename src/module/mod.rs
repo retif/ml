@@ -1,6 +1,6 @@
-use std::rc::Rc;
-use std::path::PathBuf;
 use std::ffi::OsString;
+use std::path::PathBuf;
+use std::rc::Rc;
 use std::vec;
 
 use rustc_ast::{ast, ptr};
@@ -18,14 +18,15 @@ pub struct Module {
 impl From<(Vec<ptr::P<ast::Item>>, PathBuf)> for Module {
     fn from((list, mut path): (Vec<ptr::P<ast::Item>>, PathBuf)) -> Module {
         path.set_extension("");
-//println!("path: {:#?}", path);
+        //println!("path: {:#?}", path);
         Module {
             list: list,
             path: ModulePath {
-                path: path.components()
-                          .skip(1)
-                          .map(|comp| comp.as_os_str().to_os_string())
-                          .collect::<Vec<OsString>>(),
+                path: path
+                    .components()
+                    .skip(1)
+                    .map(|comp| comp.as_os_str().to_os_string())
+                    .collect::<Vec<OsString>>(),
             },
         }
     }
@@ -37,9 +38,10 @@ impl IntoIterator for Module {
 
     fn into_iter(self) -> Self::IntoIter {
         let ref rc: Rc<ModulePath> = Rc::new(self.path);
-        self.list.into_iter()
-                 .map(|item| (item, Rc::clone(rc)))
-                 .collect::<Vec<(ptr::P<ast::Item>, Rc<ModulePath>)>>()
-                 .into_iter()
+        self.list
+            .into_iter()
+            .map(|item| (item, Rc::clone(rc)))
+            .collect::<Vec<(ptr::P<ast::Item>, Rc<ModulePath>)>>()
+            .into_iter()
     }
 }
