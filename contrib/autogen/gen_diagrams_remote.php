@@ -17,8 +17,10 @@ foreach($json as $crate => $meta) {
     chdir($workdir) || die("failed chdir");
     $output = null;
     $url = @$meta['git'];
-    $cmd = sprintf('git clone --depth=1 %s %s', escapeshellarg($url), escapeshellarg($crate));
-    shell($cmd) && die("git clone failed\n");
+    $branch = @$meta['branch'];
+    $branch_arg = $branch ? sprintf('--branch %s', escapeshellarg($branch)) : '';
+    $cmd = sprintf('git clone %s --depth=1 %s %s', $branch_arg, escapeshellarg($url), escapeshellarg($crate));
+    shell($cmd) && die("git clone failed\n command was: $cmd\n");
     $cratedir = $crate . '/' . @$meta['path'];
     $src_url_mask = "";
     if(strstr($url, "github.com")) {
