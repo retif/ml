@@ -14,7 +14,7 @@ $cratefile = @$argv[1] ?: sprintf('%s/%s', __DIR__, 'remote_crates.json');
 $cratepaths = [];
 $crate_dates = [];
 foreach($json as $crate => $meta) {
-    chdir($workdir) || die("failed chdir");
+    chdir($workdir) || die("failed chdir\n");
     $output = null;
     $url = @$meta['git'];
     $branch = @$meta['branch'];
@@ -28,8 +28,8 @@ foreach($json as $crate => $meta) {
     }
 
     // Get date of last commit
-    chdir("$cratedir") || die("failed chdir");
-    exec("git log -1 --format=\%cd", $output, $rc); if($rc) { die("git log failed"); }
+    chdir($cratedir) || die("failed chdir to '$cratedir'\n");
+    exec("git log -1 --format=\%cd", $output, $rc); if($rc) { die("git log failed\n"); }
     $last_commit_date = date('Y-m-d', @strtotime(trim(implode("\n", $output))));
     $crate_dates[$crate] = $last_commit_date;
 
@@ -45,7 +45,7 @@ $cmd = sprintf("%s/gen_diagrams.php %s %s",
                 escapeshellarg($diagrams_dir),
                 implode(' ', $cratepaths));
 
-shell($cmd) && die("");
+shell($cmd) && die("\n");
 
 gen_html_index($diagrams_dir, $json, $crate_dates);
 
@@ -54,6 +54,7 @@ echo "\nFinished. Diagrams are in $diagrams_dir\n";
 exit(0);
 
 function shell($cmd) {
+    echo "executing cmd: $cmd\n";
     passthru($cmd, $rc);
     return $rc;
 }
@@ -103,8 +104,8 @@ END;
         $buf .= sprintf('<tr class="%s"><td>%s</td><td><a href="%s">bare</a></td><td><a href="%s">compact</a></td><td><a href="%s">full</a></td><td><a href="%s">repo</a></td><td><a href="%s">crates.io</a></td><td><a href="%s">docs.rs</a></td><td>%s</td></tr>', $class, $crate, $bare, $compact, $full, $url, $crate_io_url, $docs_rs_url, $last_commit_date) . "\n";
         $cnt ++;
     }
-    $buf .= "</table></body></html>";
+    $buf .= "</table><p id='footer'>built with <a href='https://github.com/dan-da/ml'>ml</a>.</p></body></html>";
     $path = sprintf('%s/%s', $diagrams_dir, 'index.html');
-    file_put_contents($path, $buf) || die("could not write index.html");
+    file_put_contents($path, $buf) || die("could not write index.html\n");
 }
 ?>
