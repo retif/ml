@@ -1,5 +1,5 @@
 use mml;
-use mml::Config;
+use rust2uml::Config;
 
 use argi::{cli, data};
 
@@ -31,14 +31,14 @@ fn run(ctx: &argi::Command, _: Option<String>) {
     let dest: String = concat!("target/doc/", env!("CARGO_PKG_NAME")).to_string();  
 
     let config = command_to_config(ctx);
-    mml::Config::set_global(config);
+    rust2uml::Config::set_global(config);
 
-    let _ = mml::src2both("src", dest.replace("-", "_").as_str());
+    let _ = rust2uml::src2both("src", dest.replace("-", "_").as_str());
 }
 
 fn command_to_config(ctx: &argi::Command) -> Config {
 
-    let mut config = mml::Config::default();
+    let mut config = rust2uml::Config::default();
 
     match data!(bool, ctx => --include_fields) {
         Some(v) => config.include_fields = v,

@@ -1,5 +1,5 @@
 [package]
-name = "mml"
+name = "rust2uml"
 version = "0.1.59"
 description = "A library to generating UML language from Rust's project into graphiz/dot file."
 authors = [

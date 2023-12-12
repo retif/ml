@@ -1,8 +1,7 @@
-#![crate_name = "mml"]
+#![crate_name = "rust2uml"]
 #![crate_type = "lib"]
 #![feature(rustc_private)]
 #![feature(box_patterns)]
-#![doc(html_root_url = "https://docs.rs/mml/0.1.41")]
 #![cfg_attr(feature = "nightly", feature(plugin))]
 #![cfg_attr(feature = "lints", plugin(clippy))]
 #![cfg_attr(feature = "lints", deny(warnings))]
@@ -167,10 +166,10 @@ fn items2chars<'a>(modules: Vec<Module>) -> io::Result<Vec<u8>> {
 ///
 /// # Examples
 /// ```
-/// extern crate mml;
+/// extern crate rust2uml;
 ///
 /// fn main() {
-///     let _ = mml::rs2dot("src/lib.rs");
+///     let _ = rust2uml::rs2dot("src/lib.rs");
 /// }
 /// ```
 pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
@@ -188,10 +187,10 @@ pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
 ///
 /// # Examples
 /// ```
-/// extern crate mml;
+/// extern crate rust2uml;
 ///
 /// fn main() {
-///     let _ = mml::src2dot("src");
+///     let _ = rust2uml::src2dot("src");
 /// }
 /// ```
 pub fn src2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
@@ -237,10 +236,10 @@ fn content2svg(buf: Vec<u8>) -> io::Result<Vec<u8>> {
 ///
 /// # Examples
 /// ```
-/// extern crate mml;
+/// extern crate rust2uml;
 ///
 /// fn main() {
-///     let _ = mml::rs2svg("src/lib.rs");
+///     let _ = rust2uml::rs2svg("src/lib.rs");
 /// }
 /// ```
 pub fn rs2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
@@ -253,10 +252,10 @@ pub fn rs2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
 ///
 /// # Examples
 /// ```
-/// extern crate mml;
+/// extern crate rust2uml;
 ///
 /// fn main() {
-///     let _ = mml::src2svg("src");
+///     let _ = rust2uml::src2svg("src");
 /// }
 /// ```
 pub fn src2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
@@ -269,12 +268,12 @@ pub fn src2svg<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
 ///
 /// # Examples
 /// ```
-/// extern crate mml;
+/// extern crate rust2uml;
 ///
 /// fn main() {
 ///    let dest: String = concat!("target/doc/", env!("CARGO_PKG_NAME")).to_string();
 ///
-///    let _ = mml::src2both("src", dest.replace("-", "_").as_str());
+///    let _ = rust2uml::src2both("src", dest.replace("-", "_").as_str());
 /// }
 /// ```
 pub fn src2both<P: AsRef<Path>>(src: P, dest: P) -> io::Result<()> {
