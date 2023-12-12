@@ -9,7 +9,7 @@ A library (and cli tool) to generating UML language from Rust's project into gra
 ### Obtain mml
 
 ```
-$ git clone https://github.com/dan-da/ml.git
+$ git clone https://github.com/silence-coding/ml.git
 $ cd ml
 ```
 
@@ -80,8 +80,8 @@ This repo is provided as a [Cargo package](http://doc.crates.io/manifest.html) a
 ```toml
 build = "build.rs"
 
-[build-dependencies.mml]
-version = "0.1"
+[build-dependencies.rust2uml]
+version = "0.0.1"
 ```
 
 2. And your `build.rs` to generate your uml [graph/viz](http://www.graphviz.org/doc/info/lang.html) and Structured Vector Graphics at `target/dot/$CARGO_PKG_NAME.{dot,svg}`.
@@ -90,8 +90,9 @@ extern crate mml;
 
 fn main() {
     let dest: String = concat!("target/doc/", env!("CARGO_PKG_NAME")).to_string();
-
-    let _ = mml::src2both("src", dest.replace("-", "_").as_str());
+    let mut config = rust2uml::Config::default();
+    rust2uml::Config::set_global(config);
+    let _ = rust2uml::src2both("src", dest.replace("-", "_").as_str());
 }
 ```
 
