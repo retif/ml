@@ -5,7 +5,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use rustc_ast::ast;
-use rustc_ast_pretty::pprust::{state, state::PrintState, ty_to_string};
+use rustc_ast_pretty::pprust::ty_to_string;
 use rustc_span::symbol;
 
 use crate::module::path::ModulePath;
@@ -153,7 +153,8 @@ impl From<(Vec<ast::Item>, Rc<ModulePath>)> for Method {
                                                 inputs
                                                     .iter()
                                                     .map(|ref arg| {
-                                                        state::State::new().param_to_string(&arg)
+                                                        use rustc_ast_pretty::pprust::pat_to_string;
+                                                        pat_to_string(&arg.pat)
                                                     })
                                                     .collect::<Vec<String>>(),
                                                 Some(ty_to_string(&ty)),
@@ -170,7 +171,8 @@ impl From<(Vec<ast::Item>, Rc<ModulePath>)> for Method {
                                                 inputs
                                                     .iter()
                                                     .map(|ref arg| {
-                                                        state::State::new().param_to_string(&arg)
+                                                        use rustc_ast_pretty::pprust::pat_to_string;
+                                                        pat_to_string(&arg.pat)
                                                     })
                                                     .collect::<Vec<String>>(),
                                                 None,

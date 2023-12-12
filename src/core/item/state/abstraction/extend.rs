@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::Deref;
 use std::rc::Rc;
+use thin_vec::ThinVec;
 
 use rustc_ast::{ast, ptr};
 use rustc_ast_pretty::pprust::ty_to_string;
@@ -18,8 +19,8 @@ pub struct Trait<'a> {
     /// Visibility
     pub vis: &'a ast::VisibilityKind,
     pub name: symbol::Symbol,
-    pub params: Vec<symbol::Symbol>,
-    pub items: Vec<(symbol::Symbol, Vec<String>, String)>,
+    pub params: ThinVec<symbol::Symbol>,
+    pub items: ThinVec<(symbol::Symbol, Vec<String>, String)>,
 }
 
 impl<'a> PartialEq for Trait<'a> {
@@ -30,9 +31,6 @@ impl<'a> PartialEq for Trait<'a> {
 
         let bvis = match (a.vis, b.vis) {
             (Public, Public) => true,
-            (Crate(_), Crate(_)) => true,
-            (Restricted { .. }, Restricted { .. }) => true,
-            (Inherited, Inherited) => true,
             _ => false,
         };
 
@@ -51,8 +49,8 @@ impl<'a>
     From<(
         (
             &'a ast::Item,
-            &'a Vec<ast::GenericParam>,
-            &'a Vec<ptr::P<ast::Item<ast::AssocItemKind>>>,
+            &'a ThinVec<ast::GenericParam>,
+            &'a ThinVec<ptr::P<ast::Item<ast::AssocItemKind>>>,
         ),
         Rc<ModulePath>,
     )> for Trait<'a>
@@ -61,8 +59,8 @@ impl<'a>
         ((item, params, trait_item), path): (
             (
                 &'a ast::Item,
-                &'a Vec<ast::GenericParam>,
-                &'a Vec<ptr::P<ast::Item<ast::AssocItemKind>>>,
+                &'a ThinVec<ast::GenericParam>,
+                &'a ThinVec<ptr::P<ast::Item<ast::AssocItemKind>>>,
             ),
             Rc<ModulePath>,
         ),
@@ -81,7 +79,7 @@ impl<'a>
                          ..
                      }| name,
                 )
-                .collect::<Vec<symbol::Symbol>>(),
+                .collect::<ThinVec<symbol::Symbol>>(),
             items: trait_item
                 .iter()
                 .filter_map(|p| {
@@ -113,7 +111,7 @@ impl<'a>
                         None
                     }
                 })
-                .collect::<Vec<(symbol::Symbol, Vec<String>, String)>>(),
+                .collect::<ThinVec<(symbol::Symbol, Vec<String>, String)>>(),
         }
     }
 }

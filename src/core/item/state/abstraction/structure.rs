@@ -1,5 +1,6 @@
 use std::fmt;
 use std::rc::Rc;
+use thin_vec::ThinVec;
 
 use rustc_ast::ast;
 use rustc_ast_pretty::pprust::ty_to_string;
@@ -20,7 +21,7 @@ pub struct Struct<'a> {
     /// Visibility
     pub vis: &'a ast::VisibilityKind,
     pub name: symbol::Symbol,
-    pub fields: Vec<(&'a ast::VisibilityKind, Option<symbol::Symbol>, String)>,
+    pub fields: ThinVec<(&'a ast::VisibilityKind, Option<symbol::Symbol>, String)>,
 }
 
 impl<'a> PartialEq for Struct<'a> {
@@ -31,8 +32,6 @@ impl<'a> PartialEq for Struct<'a> {
 
         let bvis = match (a.vis, b.vis) {
             (Public, Public) => true,
-            (Crate(_), Crate(_)) => true,
-            (Restricted { .. }, Restricted { .. }) => true,
             (Inherited, Inherited) => true,
             _ => false,
         };
@@ -45,9 +44,9 @@ impl<'a> PartialEq for Struct<'a> {
 
 impl<'a> Eq for Struct<'a> {}
 
-impl<'a> From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Struct<'a> {
+impl<'a> From<((&'a ast::Item, &'a ThinVec<ast::FieldDef>), Rc<ModulePath>)> for Struct<'a> {
     fn from(
-        ((item, struct_field), path): ((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>),
+        ((item, struct_field), path): ((&'a ast::Item, &'a ThinVec<ast::FieldDef>), Rc<ModulePath>),
     ) -> Struct<'a> {
         Struct {
             path: path,
@@ -69,7 +68,7 @@ impl<'a> From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Str
                         None => Some((&vis.kind, None, ty_to_string(&ty))),
                     },
                 )
-                .collect::<Vec<(&ast::VisibilityKind, Option<symbol::Symbol>, String)>>(),
+                .collect::<ThinVec<(&ast::VisibilityKind, Option<symbol::Symbol>, String)>>(),
         }
     }
 }

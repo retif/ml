@@ -32,6 +32,8 @@ extern crate rustc_parse;
 extern crate rustc_serialize;
 extern crate rustc_session;
 extern crate rustc_span;
+extern crate thin_vec;
+extern crate rustc_driver;
 
 pub mod core;
 pub mod module;
@@ -43,8 +45,8 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
+use std::sync::Arc;
 
-use rustc_errors::emitter::ColorConfig;
 use rustc_errors::Handler;
 
 use rustc_ast::{ast, ptr};
@@ -124,9 +126,10 @@ impl Default for Config {
 
 /// The function `file2crate` returns a syntex module.
 fn file2crate(path: &Path) -> io::Result<ast::Crate> {
-    let sourcemap = Rc::new(SourceMap::new(FilePathMapping::empty()));
+    let sourcemap = Arc::new(SourceMap::new(FilePathMapping::empty()));
+    use rustc_errors::fallback_fluent_bundle;
     let tty_handler =
-        Handler::with_tty_emitter(ColorConfig::Auto, true, None, Some(sourcemap.clone()));
+        Handler::with_tty_emitter(Some(sourcemap.clone()), fallback_fluent_bundle(Vec::new(),true) );
     let parse_session: ParseSess = ParseSess::with_span_handler(tty_handler, sourcemap.clone());
     let parse = rustc_parse::parse_crate_from_file(path.as_ref(), &parse_session);
 
@@ -174,7 +177,7 @@ pub fn rs2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
     rustc_span::create_session_if_not_set_then(rustc_span::edition::LATEST_STABLE_EDITION, |_sg| {
         file2crate(path.as_ref()).and_then(|parse: ast::Crate| {
             items2chars(vec![Module::from((
-                parse.items,
+                Vec::from(parse.items.clone()),
                 path.as_ref().to_path_buf(),
             ))])
         })
@@ -204,7 +207,7 @@ pub fn src2dot<'a, P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
                     if path.extension() == Some(OsStr::new("rs")) {
                         file2crate(path)
                             .ok()
-                            .and_then(|parse| Some(Module::from((parse.items, path.to_path_buf()))))
+                            .and_then(|parse| Some(Module::from((Vec::from(parse.items.clone()), path.to_path_buf()))))
                     } else {
                         None
                     }

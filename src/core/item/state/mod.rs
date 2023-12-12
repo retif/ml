@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops::BitOr;
 use std::rc::Rc;
+use thin_vec::{thin_vec, ThinVec};
 
 use rustc_ast::{ast, ptr};
 use rustc_span::symbol::Symbol;
@@ -169,7 +170,7 @@ impl<'a> From<(Abstract<'a>, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>)> for 
                                 ..
                             }) = of_trait
                             {
-                                Some(Implem::from((segments, &vec![(**item).clone()])))
+                                Some(Implem::from((segments, &thin_vec![(**item).clone()])))
                             } else {
                                 None
                             }
@@ -201,8 +202,8 @@ impl<'a> From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
                         }) => {
                             let kind: (
                                 &'a ast::Item,
-                                &'a Vec<ast::GenericParam>,
-                                &'a Vec<ptr::P<ast::AssocItem>>,
+                                &'a ThinVec<ast::GenericParam>,
+                                &'a ThinVec<ptr::P<ast::AssocItem>>,
                             ) = (item, params, items);
                             let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) =
                                 (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
@@ -213,7 +214,7 @@ impl<'a> From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
                             ast::VariantData::Struct(ref struct_field, _),
                             ..,
                         ) => {
-                            let kind: (&'a ast::Item, &'a Vec<ast::FieldDef>) =
+                            let kind: (&'a ast::Item, &'a ThinVec<ast::FieldDef>) =
                                 (item, struct_field);
                             let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) =
                                 (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
@@ -224,7 +225,7 @@ impl<'a> From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
                             ast::VariantData::Tuple(ref struct_field, _),
                             ..,
                         ) => {
-                            let kind: (&'a ast::Item, &'a Vec<ast::FieldDef>) =
+                            let kind: (&'a ast::Item, &'a ThinVec<ast::FieldDef>) =
                                 (item, struct_field);
                             let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) =
                                 (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
@@ -237,8 +238,8 @@ impl<'a> From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
                         ) => {
                             let kind: (
                                 &'a ast::Item,
-                                &'a Vec<ast::GenericParam>,
-                                &'a Vec<ast::Variant>,
+                                &'a ThinVec<ast::GenericParam>,
+                                &'a ThinVec<ast::Variant>,
                             ) = (item, params, variants);
                             let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) =
                                 (Abstract::from((kind, Rc::clone(path))), properties.to_vec());

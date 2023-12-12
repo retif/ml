@@ -14,9 +14,7 @@ keywords = ["uml", "graph", "dot", "generator", "modeling-language"]
 categories = ["visualization"]
 edition = "2018"
 
-[badges]
-travis-ci = { repository = "adjivas/ml", branch = "master" }
-appveyor = { repository = "adjivas/ml", branch = "master", service = "github" }
+
 
 [[example]]
 name = "ml"
@@ -50,7 +48,8 @@ urlencoding = "2.1.0"
 # rustc_errors = {package = "rustc-ap-rustc_errors", version = "727.0.0"}
 # rustc_span = {package ="rustc-ap-rustc_span", version = "727.0.0"}
 # rustc_serialize = {package = "rustc-ap-rustc_serialize", version = "727.0.0"}
-
+smallvec = { version = "1.8.1", features = ["union", "may_dangle"] }
+#thin-vec = "0.2.12"
 [dependencies.itertools]
 version = "0.5"
 

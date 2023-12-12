@@ -1,5 +1,6 @@
 use std::fmt;
 use std::rc::Rc;
+use thin_vec::ThinVec;
 
 use rustc_ast::ast;
 use rustc_ast_pretty::pprust::ty_to_string;
@@ -19,8 +20,8 @@ pub struct Enum<'a> {
     /// Visibility
     pub vis: &'a ast::VisibilityKind,
     pub name: symbol::Symbol,
-    pub params: Vec<symbol::Symbol>,
-    pub variants: Vec<(symbol::Symbol, Vec<String>)>,
+    pub params: ThinVec<symbol::Symbol>,
+    pub variants: ThinVec<(symbol::Symbol, Vec<String>)>,
 }
 
 impl<'a> PartialEq for Enum<'a> {
@@ -31,9 +32,6 @@ impl<'a> PartialEq for Enum<'a> {
 
         let bvis = match (a.vis, b.vis) {
             (Public, Public) => true,
-            (Crate(_), Crate(_)) => true,
-            (Restricted { .. }, Restricted { .. }) => true,
-            (Inherited, Inherited) => true,
             _ => false,
         };
 
@@ -52,8 +50,8 @@ impl<'a>
     From<(
         (
             &'a ast::Item,
-            &'a Vec<ast::GenericParam>,
-            &'a Vec<ast::Variant>,
+            &'a ThinVec<ast::GenericParam>,
+            &'a ThinVec<ast::Variant>,
         ),
         Rc<ModulePath>,
     )> for Enum<'a>
@@ -62,8 +60,8 @@ impl<'a>
         ((item, params, variants), path): (
             (
                 &'a ast::Item,
-                &'a Vec<ast::GenericParam>,
-                &'a Vec<ast::Variant>,
+                &'a ThinVec<ast::GenericParam>,
+                &'a ThinVec<ast::Variant>,
             ),
             Rc<ModulePath>,
         ),
@@ -82,7 +80,7 @@ impl<'a>
                          ..
                      }| name,
                 )
-                .collect::<Vec<symbol::Symbol>>(),
+                .collect::<ThinVec<symbol::Symbol>>(),
             variants: variants
                 .iter()
                 .map(
@@ -116,7 +114,7 @@ impl<'a>
                         }
                     },
                 )
-                .collect::<Vec<(symbol::Symbol, Vec<String>)>>(),
+                .collect::<ThinVec<(symbol::Symbol, Vec<String>)>>(),
         }
     }
 }

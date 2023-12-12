@@ -1,6 +1,7 @@
 use super::DEFAULT_FUNC;
 
 use std::fmt;
+use thin_vec::ThinVec;
 
 use rustc_ast::ast;
 use rustc_ast_pretty::pprust::ty_to_string;
@@ -12,9 +13,9 @@ use crate::dot::escape_html;
 
 #[derive(Default, Debug, Clone, Eq, PartialEq)]
 pub struct Implem {
-    ty: Vec<(symbol::Symbol, Vec<String>)>,
+    ty: ThinVec<(symbol::Symbol, Vec<String>)>,
     /// method's name, arguments, result.
-    method: Vec<(symbol::Symbol, Vec<String>, Option<String>)>,
+    method: ThinVec<(symbol::Symbol, Vec<String>, Option<String>)>,
 }
 
 impl Implem {
@@ -49,14 +50,14 @@ impl Implem {
 
 impl
     From<(
-        Vec<(symbol::Symbol, Vec<String>)>,
-        Vec<(symbol::Symbol, Vec<String>, Option<String>)>,
+        ThinVec<(symbol::Symbol, Vec<String>)>,
+        ThinVec<(symbol::Symbol, Vec<String>, Option<String>)>,
     )> for Implem
 {
     fn from(
         (ty, method): (
-            Vec<(symbol::Symbol, Vec<String>)>,
-            Vec<(symbol::Symbol, Vec<String>, Option<String>)>,
+            ThinVec<(symbol::Symbol, Vec<String>)>,
+            ThinVec<(symbol::Symbol, Vec<String>, Option<String>)>,
         ),
     ) -> Implem {
         Implem {
@@ -66,8 +67,8 @@ impl
     }
 }
 
-impl<'a> From<(&'a Vec<ast::PathSegment>, &'a Vec<ast::Item>)> for Implem {
-    fn from((segments, impl_item): (&'a Vec<ast::PathSegment>, &'a Vec<ast::Item>)) -> Implem {
+impl<'a> From<(&'a ThinVec<ast::PathSegment>, &'a ThinVec<ast::Item>)> for Implem {
+    fn from((segments, impl_item): (&'a ThinVec<ast::PathSegment>, &'a ThinVec<ast::Item>)) -> Implem {
         Implem::from((
             segments
                 .iter()
@@ -91,7 +92,7 @@ impl<'a> From<(&'a Vec<ast::PathSegment>, &'a Vec<ast::Item>)> for Implem {
                         //   }
                     },
                 )
-                .collect::<Vec<(symbol::Symbol, Vec<String>)>>(),
+                .collect::<ThinVec<(symbol::Symbol, Vec<String>)>>(),
             impl_item
                 .iter()
                 .flat_map(
@@ -137,13 +138,13 @@ impl<'a> From<(&'a Vec<ast::PathSegment>, &'a Vec<ast::Item>)> for Implem {
                                         None
                                     }
                                 })
-                                .collect::<Vec<(symbol::Symbol, Vec<String>, Option<String>)>>()
+                                .collect::<ThinVec<(symbol::Symbol, Vec<String>, Option<String>)>>()
                         } else {
-                            vec![]
+                            ThinVec::new()
                         }
                     },
                 )
-                .collect::<Vec<(symbol::Symbol, Vec<String>, Option<String>)>>(),
+                .collect::<ThinVec<(symbol::Symbol, Vec<String>, Option<String>)>>(),
         ))
     }
 }

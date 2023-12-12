@@ -5,6 +5,7 @@ pub mod structure;
 use std::fmt;
 use std::rc::Rc;
 use std::vec;
+use thin_vec::ThinVec;
 
 use rustc_ast::{ast, ptr};
 use rustc_span::symbol;
@@ -116,8 +117,8 @@ impl<'a>
     From<(
         (
             &'a ast::Item,
-            &'a Vec<ast::GenericParam>,
-            &'a Vec<ptr::P<ast::Item<ast::AssocItemKind>>>,
+            &'a ThinVec<ast::GenericParam>,
+            &'a ThinVec<ptr::P<ast::Item<ast::AssocItemKind>>>,
         ),
         Rc<ModulePath>,
     )> for Abstract<'a>
@@ -126,8 +127,8 @@ impl<'a>
         arguments: (
             (
                 &'a ast::Item,
-                &'a Vec<ast::GenericParam>,
-                &'a Vec<ptr::P<ast::Item<ast::AssocItemKind>>>,
+                &'a ThinVec<ast::GenericParam>,
+                &'a ThinVec<ptr::P<ast::Item<ast::AssocItemKind>>>,
             ),
             Rc<ModulePath>,
         ),
@@ -136,8 +137,8 @@ impl<'a>
     }
 }
 
-impl<'a> From<((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)> for Abstract<'a> {
-    fn from(arguments: ((&'a ast::Item, &'a Vec<ast::FieldDef>), Rc<ModulePath>)) -> Abstract<'a> {
+impl<'a> From<((&'a ast::Item, &'a ThinVec<ast::FieldDef>), Rc<ModulePath>)> for Abstract<'a> {
+    fn from(arguments: ((&'a ast::Item, &'a ThinVec<ast::FieldDef>), Rc<ModulePath>)) -> Abstract<'a> {
         Abstract::Struct(Struct::from(arguments))
     }
 }
@@ -146,8 +147,8 @@ impl<'a>
     From<(
         (
             &'a ast::Item,
-            &'a Vec<ast::GenericParam>,
-            &'a Vec<ast::Variant>,
+            &'a ThinVec<ast::GenericParam>,
+            &'a ThinVec<ast::Variant>,
         ),
         Rc<ModulePath>,
     )> for Abstract<'a>
@@ -156,8 +157,8 @@ impl<'a>
         arguments: (
             (
                 &'a ast::Item,
-                &'a Vec<ast::GenericParam>,
-                &'a Vec<ast::Variant>,
+                &'a ThinVec<ast::GenericParam>,
+                &'a ThinVec<ast::Variant>,
             ),
             Rc<ModulePath>,
         ),
