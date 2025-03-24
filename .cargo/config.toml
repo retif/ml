@@ -1,0 +1,9 @@
+[build]
+rustflags = [
+  "-Zforce-unstable-if-unmarked",
+  "-Cprefer-dynamic=yes",
+  "--cfg=build_with_rpath"
+]
+
+[env]
+RUSTC_BOOTSTRAP = "1"

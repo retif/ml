@@ -12,8 +12,10 @@ repository = "https://github.com/silence-coding/ml"
 homepage = "https://github.com/silence-coding/ml"
 keywords = ["uml", "graph", "dot", "generator", "modeling-language"]
 categories = ["visualization"]
-edition = "2018"
+edition = "2024"
 
+[package.metadata.rust-analyzer]
+rustc_private=true
 
 
 [[example]]
@@ -39,21 +41,21 @@ travis        = ["lints", "nightly"] # for building with travis-cargo
 [dependencies]
 dot = "0.1.4"
 once_cell = "1.8.0"
-strfmt = "0.1.6"
+strfmt = "0.2.4"
 urlencoding = "2.1.0"
-# rustc_ast = {package = "rustc-ap-rustc_ast", version = "727.0.0"}
-# rustc_ast_pretty = {package = "rustc-ap-rustc_ast_pretty", version = "727.0.0"}
-# rustc_parse = {package = "rustc-ap-rustc_parse", version = "727.0.0"}
-# rustc_session = {package = "rustc-ap-rustc_session", version = "727.0.0"}
-# rustc_errors = {package = "rustc-ap-rustc_errors", version = "727.0.0"}
-# rustc_span = {package ="rustc-ap-rustc_span", version = "727.0.0"}
+#rustc_ast = {package = "rustc-ap-rustc_ast", version = "727.0.0"}
+#rustc_ast_pretty = {package = "rustc-ap-rustc_ast_pretty", version = "727.0.0"}
+#rustc_parse = {package = "rustc-ap-rustc_parse", version = "727.0.0"}
+#rustc_session = {package = "rustc-ap-rustc_session", version = "727.0.0"}
+#rustc_errors = {package = "rustc-ap-rustc_errors", version = "727.0.0"}
+#rustc_span = {package ="rustc-ap-rustc_span", version = "727.0.0"}
 # rustc_serialize = {package = "rustc-ap-rustc_serialize", version = "727.0.0"}
 
 [dependencies.itertools]
-version = "0.5"
+version = "0.14.0"
 
 [dependencies.walkdir]
-version = "1"
+version = "2.5.0"
 
 [dependencies.clippy]
 version = "0"
@@ -61,3 +63,4 @@ optional = true
 
 [dev-dependencies]
 argi = "0.1.0-beta.5"
+

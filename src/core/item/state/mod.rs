@@ -164,7 +164,7 @@ impl<'a> From<(Abstract<'a>, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>)> for 
                                 path:
                                     ast::Path {
                                         span: _,
-                                        ref segments,
+                                        segments,
                                         ..
                                     },
                                 ..
@@ -211,11 +211,11 @@ impl<'a> From<Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>> for ItemState<'a> {
                         }
                         // Structure with variables.
                         &ast::ItemKind::Struct(
-                            ast::VariantData::Struct(ref struct_field, _),
+                            ast::VariantData::Struct { ref fields, ..},
                             ..,
                         ) => {
                             let kind: (&'a ast::Item, &'a ThinVec<ast::FieldDef>) =
-                                (item, struct_field);
+                                (item, fields);
                             let kind: (Abstract, Vec<&'a (ptr::P<ast::Item>, Rc<ModulePath>)>) =
                                 (Abstract::from((kind, Rc::clone(path))), properties.to_vec());
                             Some(ItemState::from(kind))

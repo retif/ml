@@ -1,3 +1,5 @@
+#![feature(rustc_private)]
+#![feature(box_patterns)]
 #![allow(dead_code, unused_variables)]
 extern crate rust2uml;
 

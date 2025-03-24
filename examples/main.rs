@@ -1,4 +1,6 @@
-use mml;
+#![feature(rustc_private)]
+#![feature(box_patterns)]
+
 use rust2uml::Config;
 
 use argi::{cli, data};

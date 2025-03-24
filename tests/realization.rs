@@ -1,3 +1,5 @@
+#![feature(rustc_private)]
+#![feature(box_patterns)]
 #![allow(dead_code, unused_variables)]
 extern crate rust2uml;
 
@@ -26,7 +28,7 @@ trait B<T> : Debug where T: Debug {
     fn a(&self) -> Option<T>;
 }
 
-impl <T>B<T> {
+impl <T>dyn B<T> {
     fn a(&self) -> Option<T> {
         None
     }

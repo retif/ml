@@ -20,7 +20,7 @@ pub struct Item<'a> {
 
 impl<'a> From<iter::Peekable<slice::Iter<'a, (ptr::P<ast::Item>, Rc<ModulePath>)>>> for Item<'a> {
     /// The constructor method `from` returns a typed and iterable collection of abstract element.
-    fn from(iter: iter::Peekable<slice::Iter<'a, (ptr::P<ast::Item>, Rc<ModulePath>)>>) -> Item {
+    fn from(iter: iter::Peekable<slice::Iter<'a, (ptr::P<ast::Item>, Rc<ModulePath>)>>) -> Item<'a> {
         Item { it: iter }
     }
 }

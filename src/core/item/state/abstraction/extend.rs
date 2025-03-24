@@ -86,7 +86,7 @@ impl<'a>
                     let name = p.ident.name;
                     let kind = &p.kind;
                     if let &ast::AssocItemKind::Fn(box ast::Fn {
-                        sig: ast::FnSig { ref decl, .. },
+                        sig: ast::FnSig { decl, .. },
                         ..
                     }) = &kind
                     {

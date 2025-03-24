@@ -1,7 +1,7 @@
-#![crate_name = "rust2uml"]
-#![crate_type = "lib"]
 #![feature(rustc_private)]
 #![feature(box_patterns)]
+#![crate_name = "rust2uml"]
+#![crate_type = "lib"]
 #![cfg_attr(feature = "nightly", feature(plugin))]
 #![cfg_attr(feature = "lints", plugin(clippy))]
 #![cfg_attr(feature = "lints", deny(warnings))]
@@ -44,13 +44,12 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
-use std::sync::Arc;
-
-use rustc_errors::Handler;
 
 use rustc_ast::{ast, ptr};
 use rustc_session::parse::ParseSess;
-use rustc_span::source_map::{FilePathMapping, SourceMap};
+//use rustc_span::source_map::{FilePathMapping, SourceMap};
+//use rustc_span::FileName;
+use rustc_span::RealFileName;
 
 use crate::core::ListItem;
 use module::path::ModulePath;
@@ -97,10 +96,10 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         let current_dir = match std::env::current_dir() {
-            Ok(pb) => pb.into_os_string().into_string().unwrap_or("".to_string()),
+            Ok(pb) => pb.into_os_string().into_string().unwrap_or_else(|_| "".to_string()),
             Err(_) => "".to_string(),
         };
-        let src_url_mask = format!("file://{}/{}", current_dir, "{file}");
+        let src_url_mask = format!("file://{}/{{file}}", current_dir);
 
         Config {
             include_methods: true,
@@ -125,29 +124,22 @@ impl Default for Config {
 
 /// The function `file2crate` returns a syntex module.
 fn file2crate(path: &Path) -> io::Result<ast::Crate> {
-    let sourcemap = Arc::new(SourceMap::new(FilePathMapping::empty()));
-    use rustc_errors::fallback_fluent_bundle;
-    let tty_handler =
-        Handler::with_tty_emitter(Some(sourcemap.clone()), fallback_fluent_bundle(Vec::new(),true) );
-    let parse_session: ParseSess = ParseSess::with_span_handler(tty_handler, sourcemap.clone());
-    let parse = rustc_parse::parse_crate_from_file(path.as_ref(), &parse_session);
-
-    let ast: ast::Crate = parse.unwrap();
-    Ok(ast)
-
-    // An alternate way of doing this.
-    // let session = rustc_session::build_session(
-    //     rustc_session::config::Options::default(),
-    //     None,  // local_crate_source_file
-    //     rustc_errors::registry::Registry::new(&[]),
-    //     rustc_session::DiagnosticOutput::Default,
-    //     FxHashMap::default(), // driver_lint_caps
-    //     None,  // file_loader
-    //     None,  // target_override
-    // );
-    // let parse = rustc_parse::parse_crate_from_file(path.as_ref(), &session.parse_sess);
-    // let ast: ast::Crate = parse.unwrap();
-    // Ok(ast)
+    // Read the source file content.
+    let file_content = fs::read_to_string(path)?;
+    // Create a new ParseSess with an empty configuration.
+    let parse_session = ParseSess::new(Vec::new());
+    // Construct a proper filename using the updated FileName API.
+    let filename: rustc_span::FileName = rustc_span::FileName::Real(RealFileName::LocalPath(path.to_path_buf()));
+    // Create a new parser from the source string.
+    let mut parser = rustc_parse::new_parser_from_source_str(
+        &parse_session,
+        filename,
+        file_content,
+        
+    ).unwrap();
+    // Parse the crate module using the updated parser API.
+    let krate = parser.parse_crate_mod().unwrap();
+    Ok(krate)
 }
 
 /// The function `items2chars` returns a graph formated for *Graphiz/Dot*.
@@ -225,7 +217,6 @@ fn content2svg(buf: Vec<u8>) -> io::Result<Vec<u8>> {
         .spawn()
         .and_then(|child| {
             let mut ret = vec![];
-
             child.stdin.unwrap().write_all(buf.as_slice()).unwrap();
             child.stdout.unwrap().read_to_end(&mut ret).unwrap();
             Ok(ret)
@@ -281,19 +272,15 @@ pub fn src2both<P: AsRef<Path>>(src: P, dest: P) -> io::Result<()> {
         let _ = fs::create_dir_all(dest.as_ref())?;
         let mut file_dot = File::create(dest.as_ref().join(DEFAULT_NAME_DOT))?;
         let mut file_svg = File::create(dest.as_ref().join(DEFAULT_NAME_PNG))?;
-
         let content_dot: Vec<u8> = src2dot(src)?;
         let _ = file_dot.write_all(content_dot.as_slice())?;
-
         let content_svg: Vec<u8> = content2svg(content_dot)?;
         let _ = file_svg.write_all(content_svg.as_slice())?;
         Ok(())
     }
-
     rustc_span::create_session_if_not_set_then(
         rustc_span::edition::LATEST_STABLE_EDITION,
         |_sg| worker(src, dest),
     )?;
-
     Ok(())
 }

@@ -1,3 +1,5 @@
+#![feature(rustc_private)]
+#![feature(box_patterns)]
 #![allow(dead_code)]
 extern crate rust2uml;
 
@@ -14,6 +16,8 @@ struct B {
 
 #[test]
 fn test_aggregation() {
+    rust2uml::Config::set_global(rust2uml::Config::default());
+    
     assert_eq!(
         String::from_utf8(rust2uml::rs2dot("tests/aggregation.rs").unwrap()).unwrap(),
         r#"digraph ml {

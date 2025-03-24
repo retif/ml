@@ -122,7 +122,7 @@ impl From<(Vec<ast::Item>, Rc<ModulePath>)> for Method {
                          ..
                      }| {
                         if let ast::ItemKind::Impl(box ast::Impl {
-                            unsafety: _,
+                            safety: _,
                             polarity: _,
                             defaultness: _,
                             constness: _,
