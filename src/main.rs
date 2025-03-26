@@ -10,12 +10,12 @@ fn main() {
         help: "Parses rust source code and generates UML diagram",
         run: (run),
         --include_fields [bool]: { help: "include fields/variants in diagram" },
-        --include_implems [bool]: { help: "include trait implementation methods in diagram" },
+        --include_impls [bool]: { help: "include trait implementation methods in diagram" },
         --include_methods [bool]: { help: "include methods in diagram" },
         --struct_header_bgcolor [str]: { help: "header background color for structs" },
         --struct_fields_bgcolor [str]: { help: "fields background color for structs" },
         --struct_method_bgcolor [str]: { help: "methods background color for structs" },
-        --struct_implem_bgcolor [str]: { help: "implems background color for structs" },
+        --struct_impl_bgcolor [str]: { help: "implems background color for structs" },
         --enum_header_bgcolor [str]: { help: "header background color for enums" },
         --enum_fields_bgcolor [str]: { help: "fields background color for enums" },
         --enum_method_bgcolor [str]: { help: "methods background color for enums" },
@@ -47,8 +47,8 @@ fn command_to_config(ctx: &argi::Command) -> Config {
         None => {},
     }
 
-    match data!(bool, ctx => --include_implems) {
-        Some(v) => config.include_implems = v,
+    match data!(bool, ctx => --include_impls) {
+        Some(v) => config.include_impls = v,
         None => {},
     }
 
@@ -72,8 +72,8 @@ fn command_to_config(ctx: &argi::Command) -> Config {
         None => {},
     }
 
-    match data!(ctx => --struct_implem_bgcolor) {
-        Some(v) => config.struct_implem_bgcolor = v,
+    match data!(ctx => --struct_impl_bgcolor) {
+        Some(v) => config.struct_impl_bgcolor = v,
         None => {},
     }
 
