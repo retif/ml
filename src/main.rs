@@ -1,127 +1,133 @@
 #![feature(rustc_private)]
 #![feature(box_patterns)]
+extern crate clap;
 
+use clap::Parser;
 use rust2uml::Config;
 
-use argi::{cli, data};
+#[derive(Parser, Debug)]
+#[clap(author, version, about = "Parses rust source code and generates UML diagram", long_about = None)]
+struct Cli {
+    /// Exclude fields/variants in diagram
+    #[arg(long, default_value = "false")]
+    exclude_fields: bool,
+
+    /// Exclude methods in diagram
+    #[clap(long, default_value = "false")]
+    exclude_methods: bool,
+
+    /// Include trait method impls in diagram
+    #[clap(long, default_value = "false")]
+    include_impls: bool,
+
+    /// Background color for struct header
+    #[clap(long, value_name = "COLOR")]
+    struct_header_bgcolor: Option<String>,
+
+    /// Background color for struct fields
+    #[clap(long, value_name = "COLOR")]
+    struct_fields_bgcolor: Option<String>,
+
+    /// Background color for struct methods
+    #[clap(long, value_name = "COLOR")]
+    struct_method_bgcolor: Option<String>,
+
+    /// Background color for struct impls
+    #[clap(long, value_name = "COLOR")]
+    struct_impl_bgcolor: Option<String>,
+
+    /// Background color for enum header
+    #[clap(long, value_name = "COLOR")]
+    enum_header_bgcolor: Option<String>,
+
+    /// Background color for enum fields
+    #[clap(long, value_name = "COLOR")]
+    enum_fields_bgcolor: Option<String>,
+
+    /// Background color for enum methods
+    #[clap(long, value_name = "COLOR")]
+    enum_method_bgcolor: Option<String>,
+
+    /// Background color for enum impls
+    #[clap(long, value_name = "COLOR")]
+    enum_impl_bgcolor: Option<String>,
+
+    /// Background color for trait header
+    #[clap(long, value_name = "COLOR")]
+    trait_header_bgcolor: Option<String>,
+
+    /// Background color for trait methods
+    #[clap(long, value_name = "COLOR")]
+    trait_method_bgcolor: Option<String>,
+
+    /// Background color for trait impls
+    #[clap(long, value_name = "COLOR")]
+    trait_impl_bgcolor: Option<String>,
+
+    /// Mask for source code urls, eg "http://host/crate/{file}", or "none"
+    #[clap(long, value_name = "URL")]
+    src_url_mask: Option<String>,
+
+    /// Font name
+    #[clap(long)]
+    font: Option<String>,
+}
 
 fn main() {
-     cli!(
-        help: "Parses rust source code and generates UML diagram",
-        run: (run),
-        --include_fields [bool]: { help: "include fields/variants in diagram" },
-        --include_impls [bool]: { help: "include trait implementation methods in diagram" },
-        --include_methods [bool]: { help: "include methods in diagram" },
-        --struct_header_bgcolor [str]: { help: "header background color for structs" },
-        --struct_fields_bgcolor [str]: { help: "fields background color for structs" },
-        --struct_method_bgcolor [str]: { help: "methods background color for structs" },
-        --struct_impl_bgcolor [str]: { help: "implems background color for structs" },
-        --enum_header_bgcolor [str]: { help: "header background color for enums" },
-        --enum_fields_bgcolor [str]: { help: "fields background color for enums" },
-        --enum_method_bgcolor [str]: { help: "methods background color for enums" },
-        --enum_implem_bgcolor [str]: { help: "implems background color for enums" },
-        --trait_header_bgcolor [str]: { help: "header background color for traits" },
-        --trait_method_bgcolor [str]: { help: "methods background color for traits" },
-        --trait_implem_bgcolor [str]: { help: "implems background color for traits" },
-        --src_url_mask [str]: { help: "url mask for src links, eg http://host/crate/{file}, or 'none'" },
-        --font [str]: { help: "Font name" },
-    )
-    .launch();   
+    let args = Cli::parse();
+    let dest = format!("target/doc/{}", env!("CARGO_PKG_NAME"));
+    let config = command_to_config(&args);
+    Config::set_global(config);
+
+    let dest_mod = dest.replace("-", "_");
+    let _ = rust2uml::src2both("src", dest_mod.as_str());
 }
 
-fn run(ctx: &argi::Command, _: Option<String>) {
-    let dest: String = concat!("target/doc/", env!("CARGO_PKG_NAME")).to_string();  
-
-    let config = command_to_config(ctx);
-    rust2uml::Config::set_global(config);
-
-    let _ = rust2uml::src2both("src", dest.replace("-", "_").as_str());
-}
-
-fn command_to_config(ctx: &argi::Command) -> Config {
-
-    let mut config = rust2uml::Config::default();
-
-    match data!(bool, ctx => --include_fields) {
-        Some(v) => config.include_fields = v,
-        None => {},
+fn command_to_config(args: &Cli) -> Config {
+    let mut config = Config::default();
+    
+    config.include_fields = !args.exclude_fields;
+    config.include_methods = !args.exclude_methods;
+    config.include_impls = args.include_impls;
+    
+    if let Some(ref v) = args.struct_header_bgcolor {
+        config.struct_header_bgcolor = v.clone();
     }
-
-    match data!(bool, ctx => --include_impls) {
-        Some(v) => config.include_impls = v,
-        None => {},
+    if let Some(ref v) = args.struct_fields_bgcolor {
+        config.struct_fields_bgcolor = v.clone();
     }
-
-    match data!(bool, ctx => --include_methods) {
-        Some(v) => config.include_methods = v,
-        None => {},
+    if let Some(ref v) = args.struct_method_bgcolor {
+        config.struct_method_bgcolor = v.clone();
     }
-
-    match data!(ctx => --struct_header_bgcolor) {
-        Some(v) => config.struct_header_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.struct_impl_bgcolor {
+        config.struct_impl_bgcolor = v.clone();
     }
-
-    match data!(ctx => --struct_fields_bgcolor) {
-        Some(v) => config.struct_fields_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.enum_header_bgcolor {
+        config.enum_header_bgcolor = v.clone();
     }
-
-    match data!(ctx => --struct_method_bgcolor) {
-        Some(v) => config.struct_method_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.enum_fields_bgcolor {
+        config.enum_fields_bgcolor = v.clone();
     }
-
-    match data!(ctx => --struct_impl_bgcolor) {
-        Some(v) => config.struct_impl_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.enum_method_bgcolor {
+        config.enum_method_bgcolor = v.clone();
     }
-
-    match data!(ctx => --trait_header_bgcolor) {
-        Some(v) => config.trait_header_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.enum_impl_bgcolor {
+        config.enum_impl_bgcolor = v.clone();
     }
-
-    match data!(ctx => --trait_method_bgcolor) {
-        Some(v) => config.trait_method_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.trait_header_bgcolor {
+        config.trait_header_bgcolor = v.clone();
     }
-
-    match data!(ctx => --trait_implem_bgcolor) {
-        Some(v) => config.trait_implem_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.trait_method_bgcolor {
+        config.trait_method_bgcolor = v.clone();
     }
-
-    match data!(ctx => --enum_header_bgcolor) {
-        Some(v) => config.enum_header_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.trait_impl_bgcolor {
+        config.trait_impl_bgcolor = v.clone();
     }
-
-    match data!(ctx => --enum_fields_bgcolor) {
-        Some(v) => config.enum_fields_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.src_url_mask {
+        config.src_url_mask = if v == "none" { "".to_string() } else { v.clone() };
     }
-
-    match data!(ctx => --enum_method_bgcolor) {
-        Some(v) => config.enum_method_bgcolor = v,
-        None => {},
+    if let Some(ref v) = args.font {
+        config.font_name = v.clone();
     }
-
-    match data!(ctx => --enum_implem_bgcolor) {
-        Some(v) => config.enum_implem_bgcolor = v,
-        None => {},
-    }
-
-    match data!(ctx => --font) {
-        Some(v) => config.font_name = v,
-        None => {},
-    }
-
-    match data!(ctx => --src_url_mask) {
-        Some(v) if v == "none" => config.src_url_mask = "".to_string(),
-        Some(v) => config.src_url_mask = v,
-        None => {},
-    }
-
     config
 }

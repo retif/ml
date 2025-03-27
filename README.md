@@ -9,8 +9,8 @@ A library (and cli tool) to generating UML language from Rust's project into gra
 ### Obtain mml
 
 ```
-$ git clone https://github.com/silence-coding/ml.git
-$ cd ml
+$ git clone https://github.com/retif/rust2uml.git
+$ cd rust2uml
 ```
 
 ### Install Dependencies

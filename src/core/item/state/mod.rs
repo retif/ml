@@ -319,15 +319,15 @@ impl<'a> fmt::Display for ItemState<'a> {
                                     .collect::<Vec<String>>().join("<br align=\"left\"/>\n").as_str())?;
         }
 
-        let include_implem = !self.implem.is_empty() && Config::global().include_implems;
+        let include_impls = !self.implem.is_empty() && Config::global().include_impls;
 
-        if include_implem {
+        if include_impls {
             // Config::global().include_implem {
 
             let bgcolor = match self.node {
-                Abstract::Struct { .. } => Config::global().struct_implem_bgcolor.clone(),
-                Abstract::Trait { .. } => Config::global().trait_implem_bgcolor.clone(),
-                Abstract::Enum { .. } => Config::global().enum_implem_bgcolor.clone(),
+                Abstract::Struct { .. } => Config::global().struct_impl_bgcolor.clone(),
+                Abstract::Trait { .. } => Config::global().trait_impl_bgcolor.clone(),
+                Abstract::Enum { .. } => Config::global().enum_impl_bgcolor.clone(),
                 Abstract::None => "white".to_string(),
             };
 
